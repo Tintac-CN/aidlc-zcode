@@ -27,8 +27,9 @@ export function toolFile(input) {
 
 // Active intent: parse every docs/aidlc/*/state.json and rank by the state's own
 // updatedAt (audit fix P0-2: file mtime diverges from the declared semantics).
-// Intents with phase "done" are never active. mtime is only a fallback when
-// updatedAt is missing/unparseable. Per-intent failures are skipped, not fatal.
+// Intents with phase "done" or "archived" are never active. mtime is only a
+// fallback when updatedAt is missing/unparseable. Per-intent failures are
+// skipped, not fatal.
 export function findActiveIntent(root) {
   const base = join(root, 'docs', 'aidlc');
   if (!existsSync(base)) return null;
@@ -40,7 +41,7 @@ export function findActiveIntent(root) {
     try {
       if (!existsSync(statePath)) continue;
       const state = JSON.parse(readFileSync(statePath, 'utf8'));
-      if (state && state.phase === 'done') continue;
+      if (state && (state.phase === 'done' || state.phase === 'archived')) continue;
       const ts = Date.parse(String(state?.updatedAt || ''));
       const key = Number.isFinite(ts) ? ts : statSync(statePath).mtimeMs;
       if (!best || key > best.key) best = { slug: name, statePath, key, state };
@@ -59,9 +60,11 @@ export function loadIntent(root, slug) {
   } catch { return null; }
 }
 
-// Which intent does a docs/aidlc/<slug>/... path belong to?
+// Which intent does a docs/aidlc/<slug>/... path belong to? Case-insensitive:
+// on Windows the filesystem is case-insensitive, so Docs/AIDLC/x/plan.md is
+// the same file as docs/aidlc/x/plan.md and must not slip past the guards.
 export function slugOfPath(fp) {
-  const m = String(fp).replace(/\\/g, '/').match(/docs\/aidlc\/([^/]+)(?:\/|$)/);
+  const m = String(fp).replace(/\\/g, '/').match(/docs\/aidlc\/([^/]+)(?:\/|$)/i);
   return m ? m[1] : null;
 }
 
@@ -71,7 +74,9 @@ export function isTestFile(fp) {
     || /\.(test|spec)\.[cm]?[jt]sx?$/i.test(p)
     || /(^|\/)test_[^/]*\.py$/i.test(p)
     || /_test\.py$/i.test(p)
-    || /_test\.go$/i.test(p)
+    || /_test\.(go|rs|rb)$/i.test(p)
+    || /_spec\.(rb|js|ts)$/i.test(p)
+    || /(Test|Tests)\.(java|kt|cs)$/i.test(p)
     || /tests?\.(java|kt|cs)$/i.test(p);
 }
 

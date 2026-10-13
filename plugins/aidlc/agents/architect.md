@@ -25,6 +25,6 @@ tools: [Read, Write, Grep, Glob]
 
 **Construction 产出**：IaC/基础设施骨架（最小权限、可回滚）。
 
-**互审视角**（只读+报告）：架构与 PRD 语义是否一致；数据模型是否支撑全部用户故事；错误处理/安全是否缺失。
+**互审**：由 `reviewer-architect` 承担（只读角色，见 reviewer-architect.md）；本角色专注产出。
 
 输出工件路径由调度消息给定；写完回复一行：`ARCHITECT-DONE <工件路径> <开放问题数>`。

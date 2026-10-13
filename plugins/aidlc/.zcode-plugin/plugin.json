@@ -1,6 +1,6 @@
 {
   "name": "aidlc",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "AI-DLC (AI-Driven Development Life Cycle) workflow for ZCode: inception -> gate -> construction -> gate -> operations, with role subagents, artifact chain, and deterministic guardrails.",
   "description_i18n": {
     "zh-CN": "ZCode 的 AI-DLC 工作流：Inception→门控→Construction→门控→Operations，含角色子代理、工件链与流程守卫。"

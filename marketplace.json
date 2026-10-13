@@ -7,7 +7,7 @@
     {
       "name": "aidlc",
       "source": "./plugins/aidlc",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "description": "AI-DLC workflow: inception -> gate -> construction -> gate -> operations, with role subagents and guardrails.",
       "displayName": "AIDLC",
       "displayName_i18n": {

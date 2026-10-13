@@ -16,6 +16,15 @@ const lines = [
   `Gates: gate1=${gates.gate1 ?? 'pending'}, gate2=${gates.gate2 ?? 'pending'}${s.tddLock ? ', TDD-LOCK=on' : ''}${s.tddLockOverride ? ', TDD-OVERRIDE=on' : ''}`
 ];
 
+// Construction progress: unitStatus is the per-unit checkpoint map.
+const us = s.unitStatus;
+if (us && typeof us === 'object' && Object.keys(us).length) {
+  const ids = Object.keys(us);
+  const done = ids.filter(k => us[k] === 'done');
+  const pending = ids.filter(k => us[k] !== 'done');
+  lines.push(`Units: ${done.length}/${ids.length} done${pending.length ? `；pending: ${pending.join(', ')}` : ''}`);
+}
+
 // Inject the last chunk of decisions.md — prior human verdicts must be seen before acting.
 const decPath = join(dirname(active.statePath), 'decisions.md');
 if (existsSync(decPath)) {

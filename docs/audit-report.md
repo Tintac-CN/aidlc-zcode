@@ -146,3 +146,40 @@
 ## 一句话结论
 
 **这不是推倒重来，而是把"文字承诺"落地为"机制强制"。** 骨架保留，按上面 P0→P1 顺序把 4 个致命洞和 9 个可用性问题修掉，插件就能从"演示能跑"变成"实战敢用"。
+
+---
+
+# 第二轮审核（v0.2.0 → v0.3.0）
+
+> 日期：2026-10-13　方法：全量通读（5 hooks + SKILL + 9 命令 + 6 角色 + party-review + 回归套件）+ 针对性验证（POC Stop payload 复核、templates 引用 grep、大小写/正则实测）
+> 范围：不限于 AIDLC 原文，含补充设计。**修复状态：P1 五项 + P2 六项 + P3 四项全部落地，回归 26/26 绿。**
+
+## 发现清单与修复
+
+| # | 严重度 | 发现 | 修复 |
+|---|---|---|---|
+| 1 | P1 | **Edit 可篡改 decisions.md/state.json**：Rule 4/5 只校验 Write 覆写；Edit 的 old_string 可命中文件任意位置，等于改写审计历史（删回执、改 history） | 新增 Rule 6：两文件**禁 Edit**，强制走 Write（decisions 前缀校验 + state 乐观锁） |
+| 2 | P1 | **回执无轮次语义**：打回重审时旧 `GATE-APPROVED` 回执仍满足校验，复审无需新人类审批 | 回执行序判定：`GATE-REJECTED gateN` 行之后的旧回执作废；gate.md 打回流程补 `GATE-REJECTED` 标记行 |
+| 3 | P1 | **state.json 损坏 = 守卫静默失效**：loadIntent null → 回退活跃 intent（错误套用他门状态）或直接放行 | fail-closed：损坏 intent 路径全部 deny，唯一放行"Write 重写该 state.json"（仍过回执校验）——可修复不自锁 |
+| 4 | P1 | **TDD 锁全仓库作用域**：锁 intent A 时改无关模块测试也被 deny | `state.json.tddLockPaths[]`：非空只锁清单内路径（后缀匹配、大小写不敏感）；空=全仓库（兼容旧 intent） |
+| 5 | P1 | **isTestFile 漏主流惯例**：`FooTest.java`/`FooTests.cs`/`_spec.rb`/`_test.rs` 不匹配 | 补 `(Test\|Tests).(java\|kt\|cs)`、`_test.(go\|rs\|rb)`、`_spec.(rb\|js\|ts)` |
+| 6 | P2 | SKILL.md 两处"§8 模板"引用错位（模板在 §7，§8 是降级协议） | 改 §7 |
+| 7 | P2 | templates/ 目录与 §7 内联模板双源漂移（且零运行时消费者） | 删除 templates/（单一真源=SKILL §7） |
+| 8 | P2 | docs/aidlc 路径正则无 /i：Windows 大小写变体绕过 Rule 1/3/5 | 全部加 /i（slugOfPath 同步） |
+| 9 | P2 | guard-tests 在解锁窗口误报（不区分 override） | 分支：override 时改提醒重锁（顺带解决 override 无过期、忘重锁裸奔） |
+| 10 | P2 | 无终止机制：打回 3 轮"升级人类"后无命令承载；废弃 intent 永占活跃位 | `/aidlc:archive`：decisions 留痕 + phase=archived；findActiveIntent 跳过 archived |
+| 11 | P2 | 互审"只读"纯靠 prompt，pm/architect/qa 却带 Write；gate2 需看 diff 却无 Bash | 4 个只读 reviewer 角色（无 Edit/Write 工具+检查清单）；party-review 改派 reviewer；生产角色去互审节 |
+| 12 | P3 | 无 CI：回归只能手动 | `.github/workflows/plugin-tests.yml`（push/PR 自动跑语法+26 场景） |
+| 13 | P3 | Node 运行时依赖未声明（hook 报错=fail-open） | README/主页前置声明 + check-plugin node 探测 |
+| 14 | P3 | session-context 不注入 unit 进度 | 注入 `Units: n/m done; pending: ...` |
+| 15 | P3 | audit-log 字段名疑似猜测 | **撤回**：POC 捕获的 Stop payload 证实 responseText/turnId/toolCallCount 真实存在，实现正确 |
+
+## 未采纳（有意不做）
+
+- **agents 钉 model/thoughtLevel**：模型 id 因宿主/套餐而异，钉死会在用户机器上断链；留作宿主侧配置。
+- **userConfig 自定义保护路径**：hook 进程读取用户配置的管道未经证实，先不引入未验证机制。
+
+## 修复后实测
+
+- 回归套件 15 → **26 场景全绿**（新增：Edit 篡改×2、回执轮次×2、损坏 fail-closed×3、锁作用域×2、Java/Ruby 惯例×2、大小写×1、archived×1）。
+- `bash scripts/check-plugin.sh` 全过（node 探测 + 语法 + 回归 + validate + 三列表）。

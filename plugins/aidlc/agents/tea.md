@@ -20,4 +20,4 @@ tools: [Read, Write, Bash, Grep, Glob]
 2. 性能/负载测试脚本 + 量化阈值
 3. 回报：`TEA-DONE <工件/脚本路径> <E2E用例数> <性能项数>`
 
-**互审视角**（只读+报告）：E2E 覆盖闭环缺口、性能阈值缺失或不现实。
+**互审**：由 `reviewer-dev`/`reviewer-qa` 覆盖 E2E 与性能视角（见对应 reviewer 文件）；本角色专注产出。

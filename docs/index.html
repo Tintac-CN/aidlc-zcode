@@ -97,10 +97,10 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 
 <header><div class="wrap">
   <h1>AI 高速产出，<span class="grad">人类全程把关</span></h1>
-  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、六个角色子代理、工件链审计与机制化守卫。装上即用，斜杠命令驱动。</p>
+  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、十个角色子代理、工件链审计与机制化守卫。装上即用，斜杠命令驱动。</p>
   <div class="badges">
-    <span class="badge">版本 <b>v0.2.0</b></span><span class="badge">License <b>MIT</b></span>
-    <span class="badge">8 命令 · 6 角色 · 5 守卫 hooks</span><span class="badge">全生命周期实战验证</span>
+    <span class="badge">版本 <b>v0.3.0</b></span><span class="badge">License <b>MIT</b></span>
+    <span class="badge">10 命令 · 10 角色 · 5 守卫 hooks</span><span class="badge">全生命周期实战验证</span>
   </div>
   <div class="cta">
     <a class="btn primary" href="#install">安装插件</a>
@@ -146,8 +146,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <h2><span class="num">02</span>特性</h2>
   <p class="sub">全部机制经过真实项目端到端验证（含配额熔断降级、并发写、对抗绕过等压力场景）。</p>
   <div class="grid">
-    <div class="card"><h4><span class="ic">🎭</span>六个角色子代理</h4><p>pm / architect / dev / qa / tea / verifier——约束前置在各自定义中（MVP 优先、技术栈锁定、TDD 铁律、负路径必测…），随插件分发，主 agent 直接调度。</p></div>
-    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改测试会被拦；门控状态伪造需要人类审批回执；<code>.env</code>/密钥路径写入被拒。</p></div>
+    <div class="card"><h4><span class="ic">🎭</span>十个角色子代理</h4><p>六个生产角色（pm / architect / dev / qa / tea / verifier，约束前置）+ 四个<b>只读互审角色</b>（reviewer-pm / -architect / -qa / -dev，<b>无 Edit/Write 工具</b>——互审只读是机制保证，不靠提示词）。</p></div>
+    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改锁定测试会被拦；门控置 approved 必须有人类回执且<b>打回后旧回执作废</b>；审计文件禁 Edit（防篡改历史）；损坏 state.json 时 fail-closed；<code>.env</code>/密钥路径写入被拒。</p></div>
     <div class="card"><h4><span class="ic">📜</span>工件链审计</h4><p>PRD、架构、测试策略、计划、评审、决策、复盘全部落 <code>docs/aidlc/&lt;意图&gt;/</code>，一工件一提交；人类反馈<b>逐字</b>进 decisions.md。</p></div>
     <div class="card"><h4><span class="ic">🔁</span>断点续跑</h4><p><code>state.json</code> 记录阶段机与单元进度；中断后 <code>/aidlc:resume</code> 自动四方对账（state/磁盘/git/决策），按 unit 粒度恢复，不重跑已完成的。</p></div>
     <div class="card"><h4><span class="ic">🔍</span>新鲜上下文终检</h4><p>Gate#2 派独立 verifier：自己跑测试、双查计划外文件、抽查验收、核实前轮评审声称——实战中真的抓到过编排者的盲区。</p></div>
@@ -159,6 +159,9 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <section id="install"><div class="wrap">
   <h2><span class="num">03</span>安装</h2>
   <p class="sub">本仓库本身就是一个 ZCode marketplace，两种来源任选其一。</p>
+
+  <div class="note warn"><b>前置要求：Node.js ≥ 16</b>
+  <p>hooks 通过 PATH 上的 <code>node</code> 运行。机器上没有 node 时 hook 会报错——而 hook 报错 = 守卫<b>静默失效</b>（fail-open）。装完可用 <code>node --version</code> 验证。</p></div>
 
   <h3>方式一：从 GitHub 安装</h3>
   <pre><code># 本仓库为私有仓库，目标机器需已登录 GitHub
@@ -176,9 +179,9 @@ zcode plugins install aidlc@aidlc-zcode</code></pre>
 
   <h3>验证安装</h3>
   <pre><code>zcode plugins list | grep -A2 aidlc
-# 期望输出：skills: 2, commands: 8, hooks: 5
+# 期望输出：skills: 2, commands: 10, hooks: 5
 
-zcode commands list        # 应看到 8 个 /aidlc:* 命令
+zcode commands list        # 应看到 10 个 /aidlc:* 命令
 zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <p>hooks <b>自动启用</b>，无需任何配置。输入框打 <kbd>/</kbd> 能看到 <code>/aidlc:inception</code> 等命令即装好了。</p>
 </div></section>
@@ -221,7 +224,7 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <h3>第 2 步 · Gate#1 设计门 —— AI 互审 + 你拍板</h3>
   <pre><code>/aidlc:gate</code></pre>
   <ul class="tick">
-    <li>Party Mode 交叉互审：pm/architect/qa/dev 四个视角并行评审，产出 <code>reviews/gate1-ai.md</code>（BLOCKER/MAJOR/MINOR 分级，每条带文件级证据）</li>
+    <li>Party Mode 交叉互审：reviewer-pm / -architect / -qa / -dev 四个只读视角并行评审，产出 <code>reviews/gate1-ai.md</code>（BLOCKER/MAJOR/MINOR 分级，每条带文件级证据）</li>
     <li>互审结论汇总呈给你，<b>AskUserQuestion 表单</b>：批准 / 打回+反馈</li>
     <li>批准顺序被 hook 强制：先写 decisions.md 回执 <code>GATE-APPROVED gate1 &lt;日期&gt;</code>，再推进 state——颠倒会被 deny</li>
     <li>打回则回 Inception 修订：只重跑被点名的角色，复审重点核对上轮 BLOCKER 是否消解</li>
@@ -275,7 +278,8 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
     <tr><td><code>/aidlc:resume [slug]</code></td><td>断点续跑（四方对账 + unit 粒度恢复）</td><td>SessionStart 自动预热</td></tr>
     <tr><td><code>/aidlc:lock-tests</code></td><td>TDD 锁置位（校验测试已提交）</td><td>此后改测试被 deny</td></tr>
     <tr><td><code>/aidlc:unlock-tests &lt;理由&gt;</code></td><td>经人类批准解锁（理由逐字留痕）</td><td>修完契约重新上锁</td></tr>
-    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 15 场景）</td><td>改插件配置后必跑</td></tr>
+    <tr><td><code>/aidlc:archive &lt;理由&gt;</code></td><td>终止 intent（archived，历史保留作审计）</td><td>打回 3 轮不收敛 / 需求取消时</td></tr>
+    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 26 场景）</td><td>改插件配置后必跑；CI 也会自动跑</td></tr>
   </table>
 </div></section>
 
@@ -297,7 +301,7 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <h3>五个守卫 hooks（插件自带，自动启用）</h3>
   <table>
     <tr><th>Hook</th><th>事件</th><th>强制内容</th></tr>
-    <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改测试；门控置 approved 必须先有人类回执</td></tr>
+    <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改锁定测试（tddLockPaths 限定范围）；门控置 approved 须有人类回执（打回后旧回执作废）；state.json/decisions.md 禁 Edit、只追加、乐观锁；损坏 state.json fail-closed</td></tr>
     <tr><td><code>guard-paths</code></td><td>PreToolUse</td><td><code>.env</code>/密钥/凭据文件写入 deny（<code>.env.example</code> 白名单）</td></tr>
     <tr><td><code>guard-tests</code></td><td>PostToolUse</td><td>TDD 锁期间测试文件被改 → 警告注入（提示走解锁流程）</td></tr>
     <tr><td><code>session-context</code></td><td>SessionStart</td><td>新会话注入活跃 intent 状态 + decisions.md 最近 15 行</td></tr>
@@ -344,7 +348,7 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <div>
     <b>许可</b><br>
     MIT License<br>
-    AIDLC-ZCode v0.2.0<br>
+    AIDLC-ZCode v0.3.0<br>
     本页由 GitHub Pages 提供
   </div>
 </div></div></footer>

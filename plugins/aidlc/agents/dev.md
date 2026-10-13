@@ -22,4 +22,4 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 3. 跑全量验证命令
 4. 回报：`DEV-DONE <unit> <测试数> <验证结果>`
 
-**互审视角**（只读+报告）：可实现性、隐藏依赖、技术债。
+**互审**：由 `reviewer-dev` 承担（只读角色，见 reviewer-dev.md）；本角色专注产出。
