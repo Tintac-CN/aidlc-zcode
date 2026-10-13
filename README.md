@@ -54,7 +54,7 @@ zcode plugins install aidlc@aidlc-zcode
 
 ## 状态
 
-v0.1.0 —— v1 里程碑（Inception→Gate#1 端到端）。Construction/Operations 已有骨架，待实战打磨。
+v0.2.0 —— **全生命周期实战验证完毕**（inception→gate1→construction→gate2→operations→done 闭环跑通）。含配额降级协议（SKILL §8）、per-unit 断点续跑（state.json unitStatus）、verifier 检查清单固化（双查计划外文件）。
 
 ## License
 

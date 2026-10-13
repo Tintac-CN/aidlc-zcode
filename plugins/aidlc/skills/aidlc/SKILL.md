@@ -28,6 +28,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
   - 产出工件后才评审；评审意见**逐字**进 `decisions.md`。
   - 门控未过**不得**进入下一阶段（guard-gates 强制 Construction 工件）。
   - **自主权从不推断**——一次"按推荐走"只对当前阶段有效。
+  - **转写人类裁决零笔误**：逐字引用原文；表头/枚举/路径等技术字面量必须与 PRD/架构原文逐字核对后再落 decisions.md（实战教训：转写顺序颠倒会被 verifier 抓出）。
 
 ## 2. 状态文件 `state.json`
 
@@ -50,6 +51,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 - **history 只追加**：整体覆写 state.json 时必须完整保留既有 history 条目（guard-gates 乐观锁会拒绝丢失条目的覆写——这是并发保护的机制层）。
 - **decisions.md 只追加**：禁止整体覆写或删改既有内容，用 Edit 在末尾追加（guard-gates 强制）。
 - **活跃 intent**：`docs/aidlc/*/state.json` 中 `updatedAt` 最新且 `phase ≠ done` 者（hook 同此语义）。
+- **unitStatus（Construction 进度）**：`"unitStatus": { "U1": "done", "U2": "pending", ... }`——**每完成一个 unit 立即更新并提交**（per-unit checkpoint）；resume 时按此跳过已完成 unit，只续跑 pending。
 
 ## 3. 阶段协议
 
@@ -74,7 +76,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 
 1. **Sprint Planning**：拆 units → `plan.md` + `units/<n>.md`（提交）。
 2. **TDD 锁**：dev 写失败测试并提交后，运行 `/aidlc:lock-tests` 置位（此后 guard-gates **deny** 测试文件改动；契约有错走 `/aidlc:unlock-tests <理由>`）。
-3. **并行实现**（每 unit 一条泳道）：`dev`（TDD 实现）｜`architect`（IaC）｜`tea`（E2E/性能）。
+3. **并行实现**（每 unit 一条泳道）：`dev`（TDD 实现）｜`architect`（IaC）｜`tea`（E2E/性能）。**每完成一个 unit：更新 `state.json.unitStatus[<unit>]="done"` 并提交**（断点粒度=unit；中断后 resume 只续 pending units）。
 4. 全 unit 完成 + 验证命令通过 → 逐工件提交 → phase 置 `gate2` → 提示 `/aidlc:gate`。
 
 ### Gate#2（交付门）
@@ -92,7 +94,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 ## 4. 状态查询与续跑
 
 - `/aidlc:status`：读活跃 intent，报告阶段/门控/工件清单（含 git 提交状态）/下一步。
-- `/aidlc:resume`：**第一步是对账**——`state.json` 声称的相位 vs 磁盘工件清单 vs `git log` vs `decisions.md` 条目四方比对，输出差异表；按差异决定"补提交 / 补置位 / 推进 phase / 重跑某角色"，然后从断点继续四拍。对账规则：工件在盘但未提交 → 补提交；工件齐但 phase 未推进 → 推进；`tddLock=false` 但测试已有本 intent 提交 → 提示补 `/aidlc:lock-tests`；state 已推进但 decisions 无对应条目 → 报告人类补记。
+- `/aidlc:resume`：**第一步是对账**——`state.json` 声称的相位 vs 磁盘工件清单 vs `git log` vs `decisions.md` 条目四方比对，输出差异表；按差异决定"补提交 / 补置位 / 推进 phase / 重跑某角色"，然后从断点继续四拍。对账规则：工件在盘但未提交 → 补提交；工件齐但 phase 未推进 → 推进；`tddLock=false` 但测试已有本 intent 提交 → 提示补 `/aidlc:lock-tests`；state 已推进但 decisions 无对应条目 → 报告人类补记。**Construction 中断的，按 `unitStatus` 恢复：done 的 unit 不重跑，只续 pending**（unitStatus 缺失时按工件+git log 推断后回填）。
 
 ## 5. 角色调度契约
 
@@ -235,3 +237,17 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 ## 学到的东西（沉淀进 AGENTS.md / 角色约束）
 ## 下个 bolt 要改的
 ```
+
+## 8. 配额降级协议（角色代理不可用时）
+
+**触发**：Agent 派发失败（配额上限/网络/模型错误）。**降级不等于放弃纪律**，按序执行：
+
+1. **先查工作区再重派/代跑**：代理失败 ≠ 零产出（实战教训：architect 熔断前已完成全部文档同步）。检查目标工件的磁盘状态与 `git status`，确认实际产出量。
+2. **重派一次**（瞬时故障）；再失败才进入内联代跑。
+3. **内联代跑规则**：编排者代行该角色职责，但——
+   - 角色约束照常遵守（TDD 铁律、只读互审、约束前置）；
+   - TDD 锁期间如需改测试文件，照常走解锁→decisions.md 留痕→修复流程；
+   - **decisions.md 记录降级事件**：失败原因、代行的单元清单、时间；
+   - 该单元的产出在 Gate 人审时**列为追认项**。
+4. **恢复后补强**：配额/代理恢复后，关键门（Gate#2）应派**独立 verifier** 复核一轮（新鲜上下文第二双眼睛——实战实证其能抓到编排者自审盲区）。
+5. **诚实声明**：降级期间产出的评审结论必须标注"内联代行，缺独立复核"。

@@ -19,6 +19,7 @@ skills: [aidlc, party-review]
 1. 调 `party-review` skill 做 AI 交叉评审，产出 `reviews/gateN-ai.md`。
 2. 把互审结论汇总呈给用户，用 AskUserQuestion 表单化审批（通过 / 打回+反馈）。
 3. **批准时（顺序被 guard-gates hook 强制，颠倒会被 deny）**：
-   a. 先把审批结论与反馈**逐字**追加进 `decisions.md`，末行加回执 `GATE-APPROVED gateN <日期>`；
+   a. 先把审批结论与反馈**逐字**追加进 `decisions.md`——**转写核对**：表头/枚举/路径等技术字面量必须与 PRD/架构原文逐字一致（转写笔误会被 verifier 抓出）；末行加回执 `GATE-APPROVED gateN <日期>`；
    b. 再更新 `state.json`（`gates.gateN = "approved"`，phase 推进，history 追加）。
+   c. **追认项打包**：若 decisions.md 有配额降级期间的代行/解锁记录（见 SKILL §8），在本轮审批中一并列出请人类追认。
 4. **打回时**：反馈逐字进 `decisions.md`；`gates.gateN = "rejected"`；phase 回退（gate1→inception 修订，gate2→construction 修订）；状态保留不重来。修订只重跑被点名的角色，`party-review` 复审时重点核对上轮 BLOCKER 是否消解。
