@@ -184,6 +184,24 @@ zcode plugins install aidlc@aidlc-zcode</code></pre>
 zcode commands list        # 应看到 10 个 /aidlc:* 命令
 zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <p>hooks <b>自动启用</b>，无需任何配置。输入框打 <kbd>/</kbd> 能看到 <code>/aidlc:inception</code> 等命令即装好了。</p>
+
+  <h3>升级版本（已安装用户）</h3>
+  <p>仓库更新后（比如 0.2.0 → 1.0.0），本地安装<b>不会自动跟随</b>，需要手动升级：</p>
+  <pre><code># 1. 升级到 marketplace 里的最新版本
+zcode plugins update aidlc@aidlc-zcode
+# 成功输出形如：Updated plugin aidlc@aidlc-zcode from 0.2.0 to 1.0.0. Restart zcode to apply.
+
+# 2. 必须重启 ZCode——旧会话仍挂着上一版的 hooks
+# 3. 验证版本（看缓存路径里的版本号）
+zcode plugins list | grep "cache/aidlc-zcode"
+# 期望：cache/aidlc-zcode: ...\aidlc\1.0.0</code></pre>
+  <div class="note warn"><b>⚠️ 升级后不重启 = 旧守卫还在岗</b>
+  <p>命令、agent、hooks 都在<b>会话启动时</b>注册。升级后不重启的 ZCode 里跑的还是旧版守卫（例如 1.0.0 新增的「审计文件禁 Edit」「打回后旧回执作废」不会生效，但界面上看起来一切正常）——这是最容易踩的坑。</p></div>
+  <p>两点说明：</p>
+  <ul class="tick">
+    <li><b>update 没反应？</b>update 以 marketplace 记录的版本号为准——源仓库没 bump 版本时 update 会提示已是最新。本插件发新版必定同步 bump <code>plugin.json</code> 与 <code>marketplace.json</code>，正常 <code>git pull</code> 仓库（或等待 GitHub 源同步）后再 update 即可。</li>
+    <li><b>正在跑的 intent 怎么办？</b>状态全在 <code>docs/aidlc/&lt;意图&gt;/</code> 与 git 提交里，升级不碰它们。重启后 <code>/aidlc:resume</code> 照常续跑（新版守卫识别旧 intent 的 state.json，兼容 0.x 版本创建的 intent）。</li>
+  </ul>
 </div></section>
 
 <!-- ============ 快速开始 ============ -->
@@ -320,8 +338,8 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
 <!-- ============ FAQ ============ -->
 <section id="faq"><div class="wrap">
   <h2><span class="num">08</span>FAQ</h2>
-  <h3>装好了但看不到命令？</h3>
-  <p>重启 ZCode。命令/agent/hooks 都在启动时注册；更新插件后同样需要重启（并确认 <code>plugin.json</code> 与 <code>marketplace.json</code> 的版本号已 bump，否则 update 不生效）。</p>
+  <h3>装好了但看不到命令？/ 怎么升级版本？</h3>
+  <p>先重启 ZCode——命令/agent/hooks 都在启动时注册。升级用 <code>zcode plugins update aidlc@aidlc-zcode</code>（源仓库须已 bump 版本），升级后同样要重启，否则旧守卫还在岗。完整步骤与验证见 <a href="#install">§03 安装 → 升级版本</a>。</p>
   <h3>能在 headless / CI 里跑吗？</h3>
   <p>可以，但有边界：门控涉及人类审批，headless 下会停在审批处；多 agent 编排的长任务（inception/construct）在 headless 可能被超时截断——这类命令建议在交互会话跑，中断后 <code>/aidlc:resume</code> 对账续跑。</p>
   <h3>角色代理派发失败（配额/网络）怎么办？</h3>
