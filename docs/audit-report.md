@@ -2,6 +2,42 @@
 
 > 日期：2026-10-13　方法：三路并行独立审核（编排逻辑 / ZCode 机制 / 角色与守卫对抗性）+ 主审核员交叉复核与关键发现独立验证
 > 评分：编排逻辑 4/10　·　机制正确性 B-　·　角色与守卫 4.5/10
+> **修复状态（2026-10-13，v0.1.1）：P0 四项 + P1 九项中的文本类七项已修复并实测；详见文末"修复记录"。**
+
+---
+
+## ✅ 修复记录（2026-10-13，v0.1.1，commit dffe79b）
+
+| 项 | 状态 | 实现 |
+|---|---|---|
+| P0-1 模板路径不可达 | ✅ 已修 | 6 个模板全文内联进 SKILL.md §7，调度消息随发，角色零路径依赖 |
+| P0-2 mtime 违反 updatedAt 语义 | ✅ 已修 | findActiveIntent 按 `state.updatedAt` 排序（mtime 兜底），跳过 `phase=done`，单 intent 异常隔离 |
+| P0-3 门控可跳过/状态可伪造 | ✅ 已修 | 新增 `guard-gates.mjs`（PreToolUse Edit\|Write）：未过 gate1 禁写 plan.md/units；state.json 写 approved 需 decisions.md 的 `GATE-APPROVED <gate>` 回执 |
+| P0-4 TDD 锁是警告且无人置位 | ✅ 已修 | 锁升级为 deny（guard-gates 规则2）；新增 `/aidlc:lock-tests`（校验测试已提交后置位）与 `/aidlc:unlock-tests <理由>`（人类理由→decisions.md→tddLockOverride） |
+| P1-1 状态机 rejected 卡死/推断表缺失 | ✅ 已修 | gate.md 写明推断真值表（6 相位全覆盖）+ rejected 转移 + 复位 pending + 3 轮升级 |
+| P1-2 半完成态无对账 | ✅ 已修（协议层） | resume 第一步四方对账（state/磁盘/git/decisions）+ 差异修复规则写入 SKILL §4 |
+| P1-3 并行隐性依赖 | ✅ 已修（对齐拍） | Inception 增加第 4 拍"对齐拍"：编排者比对 AC 编号与语义对齐表，错位派回回填；party-review 把编号对不上列为必查 |
+| P1-4 调度契约缺输出半边 | ✅ 已修 | SKILL §5 调度消息五要素（含模板全文）+ `ROLE-DONE <path> <hash>` / `ROLE-FAIL` 回报协议，编排者只认标记 |
+| P1-5 verifier 无 Write 却要落盘 | ✅ 已修 | verifier 改为纯报告，reviews/gate2-ai.md 由编排者写入 |
+| P1-6 guard-paths 误伤（B 报告的 secrets-manager 断言经复核**不成立**，正则本就不匹配中缀段）| ✅ 顺手加固 | `.env.example/.sample/.template` 白名单；新增 .envrc/id_rsa/id_ed25519/*.p12/*.pfx/*.jks/.netrc/.aws//docker config.json |
+| P1-7 skills 逗号多值存疑 | ✅ 已改 | gate.md 改 YAML 数组 `skills: [aidlc, party-review]`，commands list 验证解析正常 |
+| P1-8 pm/qa 无 Bash 无法 mkdir | ✅ 已修 | 编排者先建目录+state 骨架再扇出（SKILL §3 显式化） |
+| P1-9 "decisions.md hook 会拦"谎言 | ✅ 已修 | 删除谎言；SKILL.md 顶部新增 §0 守卫边界声明（六条诚实边界） |
+| P2 audit-log `join(statePath,'..')` | ✅ 已修 | 改 `dirname(statePath)` |
+| P2 isTestFile 盲区 | ✅ 已修 | 覆盖 `test_*.py`/`*_test.py`/`*_test.go`/`Tests.java|kt|cs`/`spec/` 目录 |
+
+**修复后实测**：guard-gates 全部 9 个规则场景单测通过（含反斜杠 Windows 路径、override 放行、回执放行）；headless 真会话中强制 Write plan.md → 模型收到 deny 全文原样引用、文件未落盘 ✅；`/aidlc:status` 按 §4 对账协议正确发现"工件未提交/phase 落后"并预告 guard-gates 拦截 ✅。
+
+**审核后新发现（实测，重要）**：
+- 🔴 **Hook 脚本错误 = fail-open**：语法错误的 hook 会让该次调用**静默放行**（error ≠ block）。教训：hook 脚本必须保持极简并单测；未来考虑在 CI 里对 hooks/\*\*.mjs 跑 `node --check`。
+- 🟡 本会话曾出现 56 条 `hook.run.failed`：根因是会话中途卸载/迁移了 POC 插件，运行中会话仍挂着陈旧 hook（脚本路径已消失）。**安装/卸载插件后应重启应用**，否则残留 hook 持续报错（fail-open，无实害但是噪音）。
+- 🟡 B 报告的"secrets-manager 误拦"经正则复核为**误报**（`secrets?([\\/]|$)` 不匹配 `secrets-manager` 中缀段），但扩充密钥路径的建议仍被采纳。
+
+**未修复（遗留到下一批）**：P1-1 的并发写 state.json 乐观锁（协议已写"仅编排者可写"，机制层未加）；P2 的 audit-log Stop 字段实测（responseText 已在冒烟中验证有效 ✅ 实际已验）、`description_i18n` 字段名确认、decisions.md 全决策统一落盘（澄清/ops 参数已写入协议）、headless 前置条件非零退出约定（协议已写入 gate.md 推断表）。
+
+---
+
+## 原始审核结论（存档）
 > 总评：**架构方向正确，但处于"happy path 叙述"阶段——所有约束的可信度 = 模型纪律性，无机制兜底。修完 P0 才能跑通核心流程。**
 
 ---
