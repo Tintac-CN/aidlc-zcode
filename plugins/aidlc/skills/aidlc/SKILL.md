@@ -52,7 +52,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 - **只允许编排者（主会话）写 `state.json`**；角色 subagent 不得触碰。每次变更更新 `updatedAt` 并向 `history` 追加（打回类转移的 why 必须引用 decisions.md 的日期锚点）。
 - **history 只追加**：整体覆写 state.json 时必须完整保留既有 history 条目（guard-gates 乐观锁会拒绝丢失条目的覆写——这是并发保护的机制层）。
 - **decisions.md 只追加**，且**只允许 Write**（Edit 被 guard-gates deny——old_string 可命中任意位置）：先读当前全文，再 Write"全文 + 追加内容"（守卫校验前缀原样保留）。
-- **tddLockPaths（TDD 锁范围）**：锁定时记录的测试文件路径清单（相对或绝对均可，守卫按后缀匹配、大小写不敏感）。**非空时只锁清单内路径**——本 intent 的契约集，不殃及仓库其他测试；缺失/为空 = 全仓库测试文件（旧 intent 兼容行为）。
+- **tddLockPaths（TDD 锁范围）**：锁定时记录的测试文件路径清单（相对或绝对均可，守卫按后缀匹配、大小写不敏感）。每次置锁与既有清单**取并集**（多 unit 多次置锁范围只增不减，重跑不顶掉先前保护）。**非空时只锁清单内路径**——本 intent 的契约集，不殃及仓库其他测试；缺失/为空 = 全仓库测试文件（旧 intent 兼容行为）。
 - **活跃 intent**：`docs/aidlc/*/state.json` 中 `updatedAt` 最新且 `phase ∉ {done, archived}` 者（hook 同此语义）。终止的 intent 用 `/aidlc:archive` 置 `archived`，不再被注入/续跑。
 - **unitStatus（Construction 进度）**：`"unitStatus": { "U1": "done", "U2": "pending", ... }`——**每完成一个 unit 立即更新并提交**（per-unit checkpoint）；resume 时按此跳过已完成 unit，只续跑 pending。
 
@@ -60,7 +60,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 
 ### Inception（`/aidlc:inception <意图>`）
 
-1. **建 intent**：slug 用 kebab-case；**由编排者先** `mkdir -p docs/aidlc/<slug>/`、从 §7 模板写 `intent.md`、`state.json`（phase=inception）与 `decisions.md` 空骨架并提交——目录和骨架就绪后才扇出角色（角色只写自己的工件文件）。
+1. **建 intent**：slug 用 kebab-case；**由编排者先** `mkdir -p docs/aidlc/<slug>/`、从 §7 模板写 `intent.md`、`state.json`（phase=inception）与 `decisions.md` 空骨架并提交——目录和骨架就绪后才扇出角色（角色只写自己的工件文件）。同时确保 `.gitignore` 含 `docs/aidlc/*/audit.log`（Stop hook 的逐轮审计是本地过程文件，不入工件链，避免每次 status/resume 对账都报未跟踪噪音）。
 2. **澄清**：意图有歧义先向用户提最多 3 个关键问题；用户的裁决逐字记入 `decisions.md`。
 3. **并行产出**（Agent 工具并行扇出，按 §7 调度契约）：
    - `pm` → `prd.md`　`architect` → `architecture.md`　`qa` → `test-strategy.md`

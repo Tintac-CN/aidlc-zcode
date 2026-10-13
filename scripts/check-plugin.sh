@@ -29,6 +29,14 @@ for f in plugins/aidlc/hooks/scripts/**/*.mjs plugins/aidlc/hooks/scripts/*.mjs;
 done
 [[ $fail -eq 0 ]] || exit 1
 
+echo "== 1b. agents frontmatter (no CLI agents list; check name field) =="
+for f in plugins/aidlc/agents/*.md; do
+  head -1 "$f" | grep -q '^---$' && grep -q '^name:' "$f" \
+    && echo "  ok  $(basename "$f")" \
+    || { echo "  FAIL $f (missing frontmatter/name)"; fail=1; }
+done
+[[ $fail -eq 0 ]] || exit 1
+
 echo "== 2. guard regression suite =="
 node scripts/tests/guard-gates.test.mjs
 

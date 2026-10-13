@@ -107,6 +107,23 @@ t('FC corrupt state: repair Write with receipt passes', 'guard-gates.mjs',
 t('P .env write denied', 'guard-paths.mjs', w(path.join(T, '.env'), 'K=v'), 'DENY');
 t('P .env.example allowed', 'guard-paths.mjs', w(path.join(T, '.env.example'), 'K='), 'PASS');
 
+/* guard-tests: raw lock hit warns about contract; override hit reminds to re-lock */
+fs.writeFileSync(SP, JSON.stringify({ ...STATE, tddLock: true }, null, 2));
+{
+  const out = hook('guard-tests.mjs', e(path.join(T, 'src', 'app.test.ts'), 'x'));
+  const ok = out.includes('TDD-lock warning');
+  n++; if (!ok) bad++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'}      guard-tests warns on raw lock hit`);
+}
+fs.writeFileSync(SP, JSON.stringify({ ...STATE, tddLock: true, tddLockOverride: { by: 'human', at: '2026-10-13', reason: 'r' } }, null, 2));
+{
+  const out = hook('guard-tests.mjs', e(path.join(T, 'src', 'app.test.ts'), 'x'));
+  const ok = out.includes('override') && out.includes('/aidlc:lock-tests');
+  n++; if (!ok) bad++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'}      guard-tests override branch reminds to re-lock`);
+}
+fs.writeFileSync(SP, JSON.stringify(STATE, null, 2));
+
 /* session-context: updatedAt ranking + done/archived filter + unitStatus */
 fs.mkdirSync(path.join(T, 'docs', 'aidlc', 'old'), { recursive: true });
 fs.writeFileSync(path.join(T, 'docs', 'aidlc', 'old', 'state.json'), JSON.stringify({ slug: 'old', phase: 'done', updatedAt: '2026-10-13T23:00:00Z' }));

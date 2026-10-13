@@ -49,7 +49,7 @@ zcode plugins install aidlc@aidlc-zcode
 ## 开发
 
 - 插件源码：[plugins/aidlc/](plugins/aidlc/)
-- 发布自检一键脚本（node 探测 + hook 语法 + 守卫回归 26 场景 + validate + 三列表；**hook 脚本语法错误 = fail-open 静默失去保护**，必须检查）：
+- 发布自检一键脚本（node 探测 + hook 语法 + 守卫回归 28 场景 + validate + 三列表；**hook 脚本语法错误 = fail-open 静默失去保护**，必须检查）：
   ```
   bash scripts/check-plugin.sh
   ```
@@ -58,6 +58,8 @@ zcode plugins install aidlc@aidlc-zcode
 - 发布到 GitHub：`scripts/publish-github.sh`（需 `gh auth login` 一次）。
 
 ## 状态
+
+v1.0.0 —— **正式版**。v0.3.0 全部新机制经真实会话 smoke 验证：4 个 reviewer 角色并行互审（抓出预埋缺陷）、GATE-REJECTED 打回→修订→新回执重审全链路、decisions.md 纯 Write 追加链（零 Edit）、`/aidlc:archive` 终止归档；TDD 锁范围改并集累积；回归 28 场景。
 
 v0.3.0 —— 二轮审核修复：审计文件禁 Edit（防 old_string 篡改历史）、门控回执轮次语义（打回后旧回执作废）、损坏 state.json fail-closed（可修复不自锁）、TDD 锁按 `tddLockPaths` 限定作用域、isTestFile 补 Java/C#/Ruby/Rust 惯例、路径匹配大小写不敏感、只读 reviewer 角色系列、`/aidlc:archive` 终止协议、CI 回归、Node 前置声明。
 

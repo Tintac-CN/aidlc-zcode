@@ -183,3 +183,25 @@
 
 - 回归套件 15 → **26 场景全绿**（新增：Edit 篡改×2、回执轮次×2、损坏 fail-closed×3、锁作用域×2、Java/Ruby 惯例×2、大小写×1、archived×1）。
 - `bash scripts/check-plugin.sh` 全过（node 探测 + 语法 + 回归 + validate + 三列表）。
+
+---
+
+# 第三轮审核（v0.3.0 → v1.0.0 正式版）
+
+> 日期：2026-10-13　方法：运行时探针实测（不止读代码）+ 真实会话 smoke（headless yolo，覆盖全部 v0.3.0 新机制）
+> 结论：**可发布正式版**；建议项 2 个先行修复后以 1.0.0 发布。
+
+## 发现与处置
+
+| # | 严重度 | 发现 | 处置 |
+|---|---|---|---|
+| 1 | 中 | tddLockPaths 重跑置锁会**覆盖**旧清单——多 unit 场景先前 unit 的保护被顶掉或不设防 | 协议改**并集累积**（lock-tests.md + SKILL §2）：范围只增不减 |
+| 2 | 小 | guard-tests 双分支（契约警告/重锁提醒）未进回归套件，CI 抓不住其回归 | 补 2 场景（26→28），断言消息特征 |
+| 3 | 流程风险 | v0.3.0 四个新机制只有单测级验证，未跑真实会话 | **smoke 全过**（见下） |
+| 4 | 小 | audit.log 永远未跟踪，status/resume 对账反复报噪音 | SKILL 建骨架步骤补 `.gitignore docs/aidlc/*/audit.log` 指引 |
+
+## Smoke 实录（aidlc-smoke 项目，version-bump intent，9 提交）
+
+- **Run A 互审**：reviewer-pm/-architect/-qa/-dev 四角色并行派发全部成功，`REVIEWER-*-DONE B/M/m` 格式回报，30 条原始发现去重 5 BLOCKER（含预埋的"AC2 不可测"与"架构擅自闭环开放问题"）；未碰 state/decisions。
+- **Run B 打回→复审**：GATE-REJECTED 标记 → 修订（代行留痕）→ 重进门 pending → 新回执 GATE-APPROVED → state 推进 construction。decisions 四次提交构成**纯前缀追加链（零 Edit）**，history 无丢失，hook 新鲜度校验放行新回执。
+- **Run C 归档**：`/aidlc:archive` → ARCHIVED 标记 + phase=archived + history 第 5 条；session-context 实测不再注入。
