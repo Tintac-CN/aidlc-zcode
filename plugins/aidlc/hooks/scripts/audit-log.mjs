@@ -3,7 +3,7 @@
 // is the turn-level complement.
 import { readFileSync } from 'node:fs';
 import { appendFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { readStdin, parseInput, projectDir, findActiveIntent } from './lib/state.mjs';
 
 const input = parseInput(readStdin());
@@ -19,6 +19,6 @@ const line = [
 ].join(' | ');
 
 try {
-  appendFileSync(join(active.statePath, '..', 'audit.log'), line + '\n');
+  appendFileSync(join(dirname(active.statePath), 'audit.log'), line + '\n');
 } catch { /* best-effort audit */ }
 process.exit(0);

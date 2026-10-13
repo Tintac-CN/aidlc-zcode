@@ -23,6 +23,17 @@
             "timeoutMs": 5000
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "process",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-gates.mjs"],
+            "timeoutMs": 5000
+          }
+        ]
       }
     ],
     "PostToolUse": [

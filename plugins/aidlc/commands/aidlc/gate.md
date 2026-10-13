@@ -1,14 +1,24 @@
 ---
 description: Run the current AIDLC review gate (AI cross-review + human approval).
 argument-hint: "[gate1|gate2]"
-skills: aidlc, party-review
+skills: [aidlc, party-review]
 ---
 
-以 `aidlc` skill 的**门控协议**执行当前门（未指定则按 `state.json` 的 phase 推断 gate1/gate2）：
+以 `aidlc` skill 的**门控协议**执行当前门。门的推断真值表（`$ARGUMENTS` 显式指定时优先）：
 
-$ARGUMENTS
+- `phase = gate1` → 执行 Gate#1
+- `phase = gate2` → 执行 Gate#2
+- `phase = inception` 且三工件齐 → 视为推进中断，先补齐收尾（提交工件、phase 置 gate1）再执行 Gate#1
+- `phase = inception` 且工件未齐 → 拒绝执行，提示先 `/aidlc:resume` 对账
+- `phase = construction`（gate2 前置未满足）→ 提示先完成 Construction
+- `phase = operations / done` → 拒绝执行（门已过或已完结，不得重写 reviews/ 历史文件）
+- 打回后重进门：`gates.gateN = pending`（approved/rejected 是历史记录，重审以新一轮为准）
 
-要求：
-1. 先调 `party-review` skill 做 AI 交叉评审，产出 `reviews/gateN-ai.md`。
+执行顺序：
+
+1. 调 `party-review` skill 做 AI 交叉评审，产出 `reviews/gateN-ai.md`。
 2. 把互审结论汇总呈给用户，用 AskUserQuestion 表单化审批（通过 / 打回+反馈）。
-3. 反馈**逐字**追加进 `decisions.md`；通过则推进 phase，打回则回上一阶段修订（状态保留）。
+3. **批准时（顺序被 guard-gates hook 强制，颠倒会被 deny）**：
+   a. 先把审批结论与反馈**逐字**追加进 `decisions.md`，末行加回执 `GATE-APPROVED gateN <日期>`；
+   b. 再更新 `state.json`（`gates.gateN = "approved"`，phase 推进，history 追加）。
+4. **打回时**：反馈逐字进 `decisions.md`；`gates.gateN = "rejected"`；phase 回退（gate1→inception 修订，gate2→construction 修订）；状态保留不重来。修订只重跑被点名的角色，`party-review` 复审时重点核对上轮 BLOCKER 是否消解。
