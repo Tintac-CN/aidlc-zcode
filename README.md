@@ -1,5 +1,7 @@
 # aidlc-zcode
 
+> 🏠 **主页/教程**：https://tintac-cn.github.io/aidlc-zcode/ （介绍 · 安装 · 快速开始 · 完整生命周期教程 · 命令参考 · FAQ）
+
 把 AWS **AI-DLC**（AI-Driven Development Life Cycle）方法论以 **ZCode 原生插件**落地：三阶段双门控流水线 + 角色子代理 + 工件链审计 + 流程守卫。
 
 > 设计定稿：[docs/design.md](docs/design.md)（v1.0，含 D1–D10 决策清单与 POC 判定表）
