@@ -47,13 +47,15 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 - 门控取值：`pending | approved | rejected`。**approved 只能跟在人类审批回执之后写**（guard-gates 校验 decisions.md 里的 `GATE-APPROVED <gate>` 回执，没有回执的 approved 写入会被 deny）。
 - 打回转移：gate1 rejected → phase 回 `inception`（修订）；gate2 rejected → phase 回 `construction`（修订）；重审前把该门复位 `pending`，rejected 记入 history。
 - **只允许编排者（主会话）写 `state.json`**；角色 subagent 不得触碰。每次变更更新 `updatedAt` 并向 `history` 追加（打回类转移的 why 必须引用 decisions.md 的日期锚点）。
+- **history 只追加**：整体覆写 state.json 时必须完整保留既有 history 条目（guard-gates 乐观锁会拒绝丢失条目的覆写——这是并发保护的机制层）。
+- **decisions.md 只追加**：禁止整体覆写或删改既有内容，用 Edit 在末尾追加（guard-gates 强制）。
 - **活跃 intent**：`docs/aidlc/*/state.json` 中 `updatedAt` 最新且 `phase ≠ done` 者（hook 同此语义）。
 
 ## 3. 阶段协议
 
 ### Inception（`/aidlc:inception <意图>`）
 
-1. **建 intent**：slug 用 kebab-case；**由编排者先** `mkdir -p docs/aidlc/<slug>/`、从 §8 模板写 `intent.md` 与 `state.json`（phase=inception）并提交——目录和骨架就绪后才扇出角色（角色只写自己的工件文件）。
+1. **建 intent**：slug 用 kebab-case；**由编排者先** `mkdir -p docs/aidlc/<slug>/`、从 §8 模板写 `intent.md`、`state.json`（phase=inception）与 `decisions.md` 空骨架并提交——目录和骨架就绪后才扇出角色（角色只写自己的工件文件）。
 2. **澄清**：意图有歧义先向用户提最多 3 个关键问题；用户的裁决逐字记入 `decisions.md`。
 3. **并行产出**（Agent 工具并行扇出，按 §7 调度契约）：
    - `pm` → `prd.md`　`architect` → `architecture.md`　`qa` → `test-strategy.md`

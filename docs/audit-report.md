@@ -33,7 +33,12 @@
 - 🟡 本会话曾出现 56 条 `hook.run.failed`：根因是会话中途卸载/迁移了 POC 插件，运行中会话仍挂着陈旧 hook（脚本路径已消失）。**安装/卸载插件后应重启应用**，否则残留 hook 持续报错（fail-open，无实害但是噪音）。
 - 🟡 B 报告的"secrets-manager 误拦"经正则复核为**误报**（`secrets?([\\/]|$)` 不匹配 `secrets-manager` 中缀段），但扩充密钥路径的建议仍被采纳。
 
-**未修复（遗留到下一批）**：P1-1 的并发写 state.json 乐观锁（协议已写"仅编排者可写"，机制层未加）；P2 的 audit-log Stop 字段实测（responseText 已在冒烟中验证有效 ✅ 实际已验）、`description_i18n` 字段名确认、decisions.md 全决策统一落盘（澄清/ops 参数已写入协议）、headless 前置条件非零退出约定（协议已写入 gate.md 推断表）。
+**未修复（遗留到下一批）→ 第二批修复记录（2026-10-13，v0.1.2）**：
+- ✅ state.json 并发保护机制层落地：history 只追加的乐观锁（guard-gates R4：整体覆写丢失任一 history 条目即 deny）；decisions.md 只追加保护（R5：覆写必须是新建或纯追加）；session-context 直接注入 decisions.md 最近 15 行（人类裁决必达，不再只是"提示去读"）；intent 创建时初始化 decisions.md 骨架；新增 `scripts/check-plugin.sh`（hook 语法 + validate + 三列表一键自检，防 fail-open）。9 个新场景单测全过。
+- ✅ `description_i18n` 字段名确认支持（官方 presentations 插件同名用法，无需改）。
+- ✅ headless 前置条件：协议层已收敛到 gate.md 推断真值表（拒绝+指引）。
+- ✅ audit-log 的 Stop 字段 `responseText` 在冒烟中实测有效。
+- 遗留：`/aidlc:eval` 回归任务集（v1 后续）。
 
 ---
 

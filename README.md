@@ -45,14 +45,11 @@ zcode plugins install aidlc@aidlc-zcode
 ## 开发
 
 - 插件源码：[plugins/aidlc/](plugins/aidlc/)
-- 发布自检（`plugins validate` 不查组件路径，必须跑三条 list）：
+- 发布自检一键脚本（hook 语法 + validate + 三列表；**hook 脚本语法错误 = fail-open 静默失去保护**，必须检查）：
   ```
-  zcode plugins validate plugins/aidlc
-  zcode plugins list | grep aidlc
-  zcode skills list | grep aidlc
-  zcode commands list
+  bash scripts/check-plugin.sh
   ```
-- 更新插件需 **bump version**（`plugin.json` 与 `marketplace.json` 同步改）才会触发 update。
+- 更新插件需 **bump version**（`plugin.json` 与 `marketplace.json` 同步改）才会触发 update；**更新/卸载插件后重启 ZCode**，否则运行中的会话仍挂着旧 hook（会持续报 hook.run.failed）。
 - 发布到 GitHub：`scripts/publish-github.sh`（需 `gh auth login` 一次）。
 
 ## 状态
