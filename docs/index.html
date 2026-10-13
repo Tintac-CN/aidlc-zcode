@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIDLC-ZCode — AI-DLC 工作流插件 for ZCode</title>
+<meta name="description" content="把 AWS AI-DLC 方法论以 ZCode 原生插件落地：三阶段双门控流水线、角色子代理、工件链审计与流程守卫。">
+<style>
+:root{
+  --bg:#0d1117;--panel:#161b22;--panel2:#1c2330;--line:#2d333b;
+  --fg:#e6edf3;--muted:#8b949e;--accent:#4cc38a;--accent2:#58a6ff;--warn:#f0b72f;--danger:#f47067;
+  --code-bg:#0a0e14;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.75}
+a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-family:"Cascadia Code",Consolas,monospace;font-size:.88em;color:#a5d6ff}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;margin:14px 0}
+pre code{background:none;border:none;padding:0;color:#c9d1d9;font-size:.86em;line-height:1.7}
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(13,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:6px;height:56px;overflow-x:auto;white-space:nowrap}
+nav .logo{font-weight:700;color:var(--fg);margin-right:14px;white-space:nowrap}
+nav .logo span{color:var(--accent)}
+nav a{color:var(--muted);padding:6px 12px;border-radius:6px;font-size:.92em}
+nav a:hover{color:var(--fg);background:var(--panel2);text-decoration:none}
+/* hero */
+header{padding:72px 0 56px;border-bottom:1px solid var(--line);background:
+ radial-gradient(900px 320px at 20% -10%,rgba(76,195,138,.13),transparent),
+ radial-gradient(700px 300px at 85% 0%,rgba(88,166,255,.10),transparent)}
+h1{font-size:2.5em;letter-spacing:-.5px;margin-bottom:14px}
+h1 .grad{background:linear-gradient(92deg,#4cc38a,#58a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{font-size:1.15em;color:var(--muted);max-width:680px;margin-bottom:26px}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+.badge{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 14px;font-size:.85em;color:var(--muted)}
+.badge b{color:var(--fg)}
+.cta{display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-block;padding:11px 22px;border-radius:8px;font-weight:600;border:1px solid transparent}
+.btn.primary{background:var(--accent);color:#03130a}
+.btn.primary:hover{filter:brightness(1.1);text-decoration:none}
+.btn.ghost{border-color:var(--line);color:var(--fg);background:var(--panel)}
+.btn.ghost:hover{border-color:var(--muted);text-decoration:none}
+/* sections */
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+h2{font-size:1.65em;margin-bottom:8px;letter-spacing:-.3px}
+h2 .num{color:var(--accent);font-family:monospace;margin-right:10px}
+.sub{color:var(--muted);margin-bottom:28px;max-width:760px}
+h3{font-size:1.12em;margin:26px 0 10px;color:var(--fg)}
+/* flow diagram */
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:22px 0;font-size:.95em}
+.flow .node{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 16px}
+.flow .node.gate{border-color:var(--warn);color:var(--warn);font-weight:600}
+.flow .node.done{border-color:var(--accent);color:var(--accent)}
+.flow .arr{color:var(--muted)}
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:20px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+.card h4{font-size:1.02em;margin-bottom:8px}
+.card h4 .ic{margin-right:8px}
+.card p{color:var(--muted);font-size:.93em}
+/* tables */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93em}
+th{background:var(--panel2);text-align:left;padding:10px 14px;border:1px solid var(--line);font-weight:600}
+td{padding:9px 14px;border:1px solid var(--line);vertical-align:top}
+td code{white-space:nowrap}
+/* callouts */
+.note{border-left:3px solid var(--accent2);background:var(--panel);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0}
+.note.warn{border-left-color:var(--warn)}
+.note.danger{border-left-color:var(--danger)}
+.note b{display:block;margin-bottom:4px}
+.note p,.note li{color:var(--muted);font-size:.94em}
+/* steps */
+.step{display:flex;gap:18px;margin:22px 0}
+.step .n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
+.step .body{flex:1}
+.step h4{margin-bottom:6px}
+.step p{color:var(--muted);font-size:.95em}
+ul.tick{list-style:none;margin:8px 0}
+ul.tick li{padding-left:26px;position:relative;color:var(--muted);font-size:.95em;margin:5px 0}
+ul.tick li::before{content:"✓";position:absolute;left:2px;color:var(--accent);font-weight:700}
+footer{padding:40px 0 60px;color:var(--muted);font-size:.9em}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px}
+kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-family:monospace;font-size:.85em}
+@media (max-width:640px){h1{font-size:1.9em}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="logo">AIDLC<span>-ZCode</span></div>
+  <a href="#intro">简介</a><a href="#features">特性</a><a href="#install">安装</a>
+  <a href="#quickstart">快速开始</a><a href="#tutorial">完整教程</a><a href="#commands">命令参考</a>
+  <a href="#how">工作原理</a><a href="#faq">FAQ</a>
+</div></nav>
+
+<header><div class="wrap">
+  <h1>AI 高速产出，<span class="grad">人类全程把关</span></h1>
+  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、六个角色子代理、工件链审计与机制化守卫。装上即用，斜杠命令驱动。</p>
+  <div class="badges">
+    <span class="badge">版本 <b>v0.2.0</b></span><span class="badge">License <b>MIT</b></span>
+    <span class="badge">8 命令 · 6 角色 · 5 守卫 hooks</span><span class="badge">全生命周期实战验证</span>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="#install">安装插件</a>
+    <a class="btn ghost" href="#tutorial">看完整教程</a>
+    <a class="btn ghost" href="https://github.com/Tintac-CN/aidlc-zcode">GitHub 仓库</a>
+  </div>
+</div></header>
+
+<!-- ============ 简介 ============ -->
+<section id="intro"><div class="wrap">
+  <h2><span class="num">01</span>这是什么</h2>
+  <p class="sub">AI-DLC 是 AWS 提出的 AI 驱动开发方法论：AI 负责计划、提问、产出；人类负责回答、决策、审批。本插件把这套方法论变成 ZCode 里的可执行流水线——不是又一个小工具，而是把「门控」「工件链」「角色分工」变成机制。</p>
+
+  <div class="flow">
+    <span class="node">Inception 需求</span><span class="arr">→</span>
+    <span class="node gate">Gate#1 设计门（人审）</span><span class="arr">→</span>
+    <span class="node">Construction 实现</span><span class="arr">→</span>
+    <span class="node gate">Gate#2 交付门（人审）</span><span class="arr">→</span>
+    <span class="node">Operations 运维</span><span class="arr">→</span>
+    <span class="node done">done</span>
+  </div>
+
+  <h3>三层设计（一个核心，多种来源）</h3>
+  <table>
+    <tr><th>层</th><th>来源</th><th>本插件的落地</th></tr>
+    <tr><td>方法论</td><td>AWS AI-DLC</td><td>三阶段双门控、Bolts/Units、四拍仪式（提问→工件→评审→门控）</td></tr>
+    <tr><td>实施模式</td><td>BMAD Method（AWS 中国博客实证）</td><td>角色化 agent、约束前置、并行产出、Party Mode 交叉互审</td></tr>
+    <tr><td>工程实践</td><td>Anthropic《AI-native SDLC playbook》</td><td>工件链即审计链、hooks 作确定性门、verifier 新鲜上下文终检</td></tr>
+  </table>
+
+  <div class="note"><b>核心哲学</b>
+    <ul class="tick">
+      <li>每个阶段固定四拍：<b>提问 → 工件 → 评审 → 门控</b>，不可跳步</li>
+      <li>门控分两层：AI 互审抓硬伤（快），人类审批判语义（慢）——你的注意力只花在门上</li>
+      <li>自主权从不推断：一次「按推荐走」只对当前阶段有效</li>
+      <li>每份工件一次 git 提交——<b>提交链即审计链</b>，任何一步可回溯</li>
+    </ul>
+  </div>
+</div></section>
+
+<!-- ============ 特性 ============ -->
+<section id="features"><div class="wrap">
+  <h2><span class="num">02</span>特性</h2>
+  <p class="sub">全部机制经过真实项目端到端验证（含配额熔断降级、并发写、对抗绕过等压力场景）。</p>
+  <div class="grid">
+    <div class="card"><h4><span class="ic">🎭</span>六个角色子代理</h4><p>pm / architect / dev / qa / tea / verifier——约束前置在各自定义中（MVP 优先、技术栈锁定、TDD 铁律、负路径必测…），随插件分发，主 agent 直接调度。</p></div>
+    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改测试会被拦；门控状态伪造需要人类审批回执；<code>.env</code>/密钥路径写入被拒。</p></div>
+    <div class="card"><h4><span class="ic">📜</span>工件链审计</h4><p>PRD、架构、测试策略、计划、评审、决策、复盘全部落 <code>docs/aidlc/&lt;意图&gt;/</code>，一工件一提交；人类反馈<b>逐字</b>进 decisions.md。</p></div>
+    <div class="card"><h4><span class="ic">🔁</span>断点续跑</h4><p><code>state.json</code> 记录阶段机与单元进度；中断后 <code>/aidlc:resume</code> 自动四方对账（state/磁盘/git/决策），按 unit 粒度恢复，不重跑已完成的。</p></div>
+    <div class="card"><h4><span class="ic">🔍</span>新鲜上下文终检</h4><p>Gate#2 派独立 verifier：自己跑测试、双查计划外文件、抽查验收、核实前轮评审声称——实战中真的抓到过编排者的盲区。</p></div>
+    <div class="card"><h4><span class="ic">🧯</span>配额降级协议</h4><p>角色代理因配额/网络不可用时：先查工作区再重派 → 内联代跑留痕 → 门审时打包追认 → 恢复后补独立复核。降级不弃纪律。</p></div>
+  </div>
+</div></section>
+
+<!-- ============ 安装 ============ -->
+<section id="install"><div class="wrap">
+  <h2><span class="num">03</span>安装</h2>
+  <p class="sub">本仓库本身就是一个 ZCode marketplace，两种来源任选其一。</p>
+
+  <h3>方式一：从 GitHub 安装</h3>
+  <pre><code># 本仓库为私有仓库，目标机器需已登录 GitHub
+zcode plugins marketplace add https://github.com/Tintac-CN/aidlc-zcode
+zcode plugins install aidlc@aidlc-zcode</code></pre>
+
+  <h3>方式二：从本地目录安装（内网/免认证）</h3>
+  <pre><code>git clone https://github.com/Tintac-CN/aidlc-zcode.git
+zcode plugins marketplace add /path/to/aidlc-zcode
+zcode plugins install aidlc@aidlc-zcode</code></pre>
+  <p>或在客户端 <b>Plugin Marketplace → <code>+</code> → Add Plugin Marketplace</b> 粘贴仓库地址，然后在 Discover 里找到 <b>AIDLC</b> 点 <b>Get</b>。</p>
+
+  <div class="note warn"><b>⚠️ 装完必须重启 ZCode</b>
+  <p>命令、角色 agent、hooks 都在启动时注册。不重启的话，旧会话看不到新组件（实测教训）。</p></div>
+
+  <h3>验证安装</h3>
+  <pre><code>zcode plugins list | grep -A2 aidlc
+# 期望输出：skills: 2, commands: 8, hooks: 5
+
+zcode commands list        # 应看到 8 个 /aidlc:* 命令
+zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
+  <p>hooks <b>自动启用</b>，无需任何配置。输入框打 <kbd>/</kbd> 能看到 <code>/aidlc:inception</code> 等命令即装好了。</p>
+</div></section>
+
+<!-- ============ 快速开始 ============ -->
+<section id="quickstart"><div class="wrap">
+  <h2><span class="num">04</span>快速开始（3 分钟）</h2>
+  <p class="sub">插件没有「启动」按钮——它常驻 ZCode，在任意项目里用斜杠命令驱动。</p>
+
+  <div class="step"><div class="n">1</div><div class="body">
+    <h4>打开一个 git 项目</h4>
+    <p>工件链靠 git 提交做审计。项目还不是 git 仓库？插件会提醒你 <code>git init</code>。</p>
+  </div></div>
+  <div class="step"><div class="n">2</div><div class="body">
+    <h4>一句话意图启动</h4>
+<pre><code>/aidlc:inception 给这个工具加一个导出CSV的功能</code></pre>
+    <p>插件会建 <code>docs/aidlc/&lt;意图名&gt;/</code>，并行调度 pm / architect / qa 产出 PRD、架构、测试策略三份工件。</p>
+  </div></div>
+  <div class="step"><div class="n">3</div><div class="body">
+    <h4>过第一道门</h4>
+<pre><code>/aidlc:gate</code></pre>
+    <p>AI 交叉评审三份工件（抓硬性不一致），然后<b>停下来等你</b>：表单化审批（通过 / 打回+反馈）。你的反馈逐字进 <code>decisions.md</code>。</p>
+  </div></div>
+</div></section>
+
+<!-- ============ 完整教程 ============ -->
+<section id="tutorial"><div class="wrap">
+  <h2><span class="num">05</span>完整教程：一次真实交付的全生命周期</h2>
+  <p class="sub">以下流程来自一次真实运行：从「给命令行待办工具加导出 CSV」一句话，到 72/72 测试全绿、双门批准、28 个审计提交的完整交付。照着走一遍，你就掌握全部用法。</p>
+
+  <h3>第 1 步 · Inception —— 把一句话变成三份工件</h3>
+  <pre><code>/aidlc:inception 给一个命令行待办事项工具加导出CSV功能</code></pre>
+  <ul class="tick">
+    <li>编排者先建目录与骨架（intent.md + state.json + decisions.md），再并行扇出三个角色</li>
+    <li>意图有歧义会<b>先问你</b>（最多 3 个关键问题）——AI 不猜，你的裁决逐字留痕</li>
+    <li>三工件齐后跑「对齐拍」：交叉核对验收标准编号与语义对齐表，错位派回对应角色回填</li>
+  </ul>
+  <p>产出：<code>prd.md</code>（用户故事+可测验收标准）、<code>architecture.md</code>（架构+数据模型+决策理由）、<code>test-strategy.md</code>（P0/P1/P2 风险排序）。</p>
+
+  <h3>第 2 步 · Gate#1 设计门 —— AI 互审 + 你拍板</h3>
+  <pre><code>/aidlc:gate</code></pre>
+  <ul class="tick">
+    <li>Party Mode 交叉互审：pm/architect/qa/dev 四个视角并行评审，产出 <code>reviews/gate1-ai.md</code>（BLOCKER/MAJOR/MINOR 分级，每条带文件级证据）</li>
+    <li>互审结论汇总呈给你，<b>AskUserQuestion 表单</b>：批准 / 打回+反馈</li>
+    <li>批准顺序被 hook 强制：先写 decisions.md 回执 <code>GATE-APPROVED gate1 &lt;日期&gt;</code>，再推进 state——颠倒会被 deny</li>
+    <li>打回则回 Inception 修订：只重跑被点名的角色，复审重点核对上轮 BLOCKER 是否消解</li>
+  </ul>
+  <div class="note"><b>实战数据</b><p>真实运行中，Gate#1 互审抓出 3 个 BLOCKER / 9 个 MAJOR——包括一个「按字面实现会静默删数据」的 Windows 原子写缺陷。这就是互审的价值。</p></div>
+
+  <h3>第 3 步 · Construction —— TDD 与并行泳道</h3>
+  <pre><code>/aidlc:construct
+/aidlc:lock-tests        # 失败测试提交后上锁
+# ……dev 实现至全绿……
+/aidlc:unlock-tests 契约字段写错了   # 仅当契约本身有错，经你批准解锁</code></pre>
+  <ul class="tick">
+    <li>Sprint Planning：PRD 拆成 units（<code>plan.md</code> + <code>units/*.md</code>）</li>
+    <li><b>TDD 铁律</b>：先写失败测试并提交 → <code>/aidlc:lock-tests</code> 上锁 → 此后改测试文件会被 hook <b>deny</b>；契约有错走 unlock（理由进 decisions.md）</li>
+    <li>并行泳道：dev（TDD 实现）｜architect（基础设施）｜tea（E2E/性能，量化阈值）</li>
+    <li>每完成一个 unit 更新 <code>state.json</code> 的 unitStatus 并提交——中断后 resume 只续未完成的</li>
+  </ul>
+
+  <h3>第 4 步 · Gate#2 交付门 —— 独立终检 + 你验收</h3>
+  <pre><code>/aidlc:gate</code></pre>
+  <ul class="tick">
+    <li>互审 + <b>独立 verifier</b>（新鲜上下文）：对照 plan 逐单元核对、自己跑全量测试、双查计划外文件（<code>git status</code> + <code>git ls-files</code>）、子进程抽查验收</li>
+    <li>verifier 只报告不修复——发现的问题交回对应角色</li>
+    <li>你审批（表单）→ 回执 <code>GATE-APPROVED gate2</code> → 进入 Operations</li>
+  </ul>
+
+  <h3>第 5 步 · Operations 与完结</h3>
+  <pre><code>/aidlc:ops</code></pre>
+  <ul class="tick">
+    <li>产出 <code>ops-runbook.md</code>（运维手册：测试/备份/退出码语义/已知边界）</li>
+    <li>SLA/阈值/部署窗口由<b>你</b>决定，裁决逐字留痕</li>
+    <li>复盘 <code>retro.md</code>（什么有效/什么没用/下个改什么）→ phase=done，生命周期闭环</li>
+  </ul>
+
+  <h3>中断了怎么办</h3>
+  <pre><code>/aidlc:resume          # 四方对账：state vs 磁盘 vs git log vs decisions
+/aidlc:status          # 随时查当前阶段/门控/工件/下一步</code></pre>
+  <p>新开会话时插件自动注入当前 intent 的状态摘要与最近的决策记录——续跑不靠记忆，一切以落盘状态为准。</p>
+</div></section>
+
+<!-- ============ 命令参考 ============ -->
+<section id="commands"><div class="wrap">
+  <h2><span class="num">06</span>命令参考</h2>
+  <table>
+    <tr><th>命令</th><th>作用</th><th>备注</th></tr>
+    <tr><td><code>/aidlc:inception &lt;意图&gt;</code></td><td>启动意图：建骨架 → 并行产出 PRD/架构/测试策略</td><td>歧义先问，最多 3 问</td></tr>
+    <tr><td><code>/aidlc:gate [gate1|gate2]</code></td><td>执行当前门：AI 互审 → 人类审批</td><td>推断真值表覆盖全部相位；打回自动回退</td></tr>
+    <tr><td><code>/aidlc:construct</code></td><td>拆 units、TDD 锁、并行实现</td><td>前置：gate1 approved（hook 强制）</td></tr>
+    <tr><td><code>/aidlc:ops</code></td><td>运维手册 + 参数收集 + 复盘完结</td><td>前置：gate2 approved</td></tr>
+    <tr><td><code>/aidlc:status</code></td><td>查阶段/门控/工件清单/下一步</td><td>含 git 提交状态对账</td></tr>
+    <tr><td><code>/aidlc:resume [slug]</code></td><td>断点续跑（四方对账 + unit 粒度恢复）</td><td>SessionStart 自动预热</td></tr>
+    <tr><td><code>/aidlc:lock-tests</code></td><td>TDD 锁置位（校验测试已提交）</td><td>此后改测试被 deny</td></tr>
+    <tr><td><code>/aidlc:unlock-tests &lt;理由&gt;</code></td><td>经人类批准解锁（理由逐字留痕）</td><td>修完契约重新上锁</td></tr>
+    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 15 场景）</td><td>改插件配置后必跑</td></tr>
+  </table>
+</div></section>
+
+<!-- ============ 工作原理 ============ -->
+<section id="how"><div class="wrap">
+  <h2><span class="num">07</span>工作原理</h2>
+
+  <h3>状态机与工件</h3>
+  <pre><code>docs/aidlc/&lt;slug&gt;/
+├── state.json          # 阶段机：phase / gates / tddLock / unitStatus / history（只追加）
+├── intent.md           # 一句话意图（用户原话逐字保留）
+├── prd.md  architecture.md  test-strategy.md     # Inception 产出
+├── plan.md  units/     # Construction 计划
+├── reviews/            # 各门 AI 互审与 verifier 报告
+├── decisions.md        # 人类决策台账（只追加；门控回执在此校验）
+├── audit.log           # Stop hook 逐轮审计
+└── ops-runbook.md  retro.md                      # Operations 产出</code></pre>
+
+  <h3>五个守卫 hooks（插件自带，自动启用）</h3>
+  <table>
+    <tr><th>Hook</th><th>事件</th><th>强制内容</th></tr>
+    <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改测试；门控置 approved 必须先有人类回执</td></tr>
+    <tr><td><code>guard-paths</code></td><td>PreToolUse</td><td><code>.env</code>/密钥/凭据文件写入 deny（<code>.env.example</code> 白名单）</td></tr>
+    <tr><td><code>guard-tests</code></td><td>PostToolUse</td><td>TDD 锁期间测试文件被改 → 警告注入（提示走解锁流程）</td></tr>
+    <tr><td><code>session-context</code></td><td>SessionStart</td><td>新会话注入活跃 intent 状态 + decisions.md 最近 15 行</td></tr>
+    <tr><td><code>audit-log</code></td><td>Stop</td><td>逐轮摘要追加 audit.log</td></tr>
+  </table>
+
+  <div class="note danger"><b>🔒 诚实的边界声明（重要）</b>
+  <ul class="tick">
+    <li>hooks 是<b>流程约束</b>（防手滑、强制仪式），<b>不是安全边界</b>——Bash 重定向等间接写可绕过；强边界请放 CI / 分支保护层</li>
+    <li>角色「常驻约束」是提示词，长上下文/对抗输入下可能被稀释——<b>门控处的人类复核是唯一可信兜底</b></li>
+    <li>hook 脚本出错会 fail-open（静默失去保护）——改插件后务必跑 <code>/aidlc:eval</code></li>
+    <li>多 intent 并行会话不在当前版本支持范围（活跃 intent 按 updatedAt 判定）</li>
+  </ul></div>
+</div></section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq"><div class="wrap">
+  <h2><span class="num">08</span>FAQ</h2>
+  <h3>装好了但看不到命令？</h3>
+  <p>重启 ZCode。命令/agent/hooks 都在启动时注册；更新插件后同样需要重启（并确认 <code>plugin.json</code> 与 <code>marketplace.json</code> 的版本号已 bump，否则 update 不生效）。</p>
+  <h3>能在 headless / CI 里跑吗？</h3>
+  <p>可以，但有边界：门控涉及人类审批，headless 下会停在审批处；多 agent 编排的长任务（inception/construct）在 headless 可能被超时截断——这类命令建议在交互会话跑，中断后 <code>/aidlc:resume</code> 对账续跑。</p>
+  <h3>角色代理派发失败（配额/网络）怎么办？</h3>
+  <p>插件内置配额降级协议（SKILL §8）：自动先查工作区（代理失败≠零产出）→ 重派一次 → 仍失败则编排者内联代跑并在 decisions.md 留痕，门审时打包请你追认；恢复后建议补一轮独立 verifier。</p>
+  <h3>它会把我的代码改成什么样？</h3>
+  <p>所有工件只落在 <code>docs/aidlc/</code> 下；代码改动只发生在 Construction 且被 TDD 锁与门控约束。decisions.md / state.json 的 history 是只追加的（hook 强制），人类决策记录不可被 AI 删改。</p>
+  <h3>和直接用大模型写代码有什么区别？</h3>
+  <p>没有门控的 AI 编码是「信任我」；AIDLC 是「验证我」——每阶段有工件、有互审、有你的一票，且你的每次裁决都有回执和审计。真实运行里，互审和独立终检都抓到过人审前的问题。</p>
+</div></section>
+
+<footer><div class="wrap"><div class="cols">
+  <div>
+    <b>资源</b><br>
+    <a href="https://github.com/Tintac-CN/aidlc-zcode">GitHub 仓库</a><br>
+    <a href="https://github.com/Tintac-CN/aidlc-zcode/blob/main/docs/design.md">设计定稿 v1.0</a><br>
+    <a href="https://github.com/Tintac-CN/aidlc-zcode/blob/main/docs/audit-report.md">审核报告</a>
+  </div>
+  <div>
+    <b>方法论来源</b><br>
+    AWS AI-DLC（AI-Driven Development Life Cycle）<br>
+    BMAD Method 实施模式<br>
+    Anthropic《AI-native SDLC playbook》
+  </div>
+  <div>
+    <b>许可</b><br>
+    MIT License<br>
+    AIDLC-ZCode v0.2.0<br>
+    本页由 GitHub Pages 提供
+  </div>
+</div></div></footer>
+
+</body>
+</html>
