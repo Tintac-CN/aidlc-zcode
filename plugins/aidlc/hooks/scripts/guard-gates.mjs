@@ -45,14 +45,18 @@ if (/docs\/aidlc\/[^/]+\/state\.json$/.test(fp)) {
   const text = String(ti.content ?? ti.new_string ?? ti.newString ?? '');
 
   // Rule 3 — gate approval must be recorded by a human before state.json says so.
+  // Receipt is strict: a line that is exactly "GATE-APPROVED <gate> <real date>".
+  // Protocol prose that merely mentions the receipt (e.g. scaffold help text) must
+  // never satisfy this — hence ^…$ anchors and a concrete date.
   const hits = text.match(/"(gate1|gate2)"\s*:\s*"approved"/g) || [];
   for (const hit of hits) {
     const g = hit.match(/gate1|gate2/)[0];
     const decPath = join(dir, 'decisions.md');
     let receipt = '';
     try { receipt = existsSync(decPath) ? readFileSync(decPath, 'utf8') : ''; } catch { /* treat as absent */ }
-    if (!new RegExp(`GATE-APPROVED\\s+${g}\\b`, 'i').test(receipt)) {
-      deny(`AIDLC 门控：检测到把 ${g} 置为 approved，但 decisions.md 没有人类审批回执（GATE-APPROVED ${g}）。门控批准必须先经人类审批：运行 /aidlc:gate，把审批结论与反馈逐字写入 decisions.md（末行加 GATE-APPROVED ${g} 日期）之后，再更新 state.json。`);
+    const receiptRe = new RegExp(`^GATE-APPROVED\\s+${g}\\s+\\d{4}-\\d{2}-\\d{2}\\s*$`, 'mi');
+    if (!receiptRe.test(receipt)) {
+      deny(`AIDLC 门控：检测到把 ${g} 置为 approved，但 decisions.md 没有人类审批回执（需要独立一行、格式严格为 "GATE-APPROVED ${g} YYYY-MM-DD"）。门控批准必须先经人类审批：运行 /aidlc:gate，把审批结论与反馈逐字写入 decisions.md 之后，再更新 state.json。`);
     }
   }
 
