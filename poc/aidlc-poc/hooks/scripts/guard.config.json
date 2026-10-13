@@ -1,0 +1,5 @@
+{
+  "mode": "deny",
+  "protectedPatterns": ["poc-protected"],
+  "message": "aidlc-poc guard"
+}

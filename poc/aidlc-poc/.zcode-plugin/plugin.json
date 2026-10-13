@@ -1,0 +1,14 @@
+{
+  "name": "aidlc-poc",
+  "version": "0.1.1",
+  "description": "AI-DLC POC: proves ZCode plugin mechanics (commands, skills, subagents, hooks) for the AIDLC-ZCode integration design.",
+  "description_i18n": {
+    "zh-CN": "AI-DLC POC：验证 ZCode 插件机制（命令/技能/子代理/hooks）是否支撑 AIDLC-ZCode 集成设计。"
+  },
+  "author": { "name": "POC" },
+  "license": "MIT",
+  "skills": "skills",
+  "commands": "commands",
+  "agents": "agents",
+  "hooks": "hooks/hooks.json"
+}

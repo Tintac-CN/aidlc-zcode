@@ -1,0 +1,16 @@
+{
+  "name": "aidlc-zcode",
+  "owner": { "name": "zhonghaoxi" },
+  "plugins": [
+    {
+      "name": "aidlc",
+      "source": "./plugins/aidlc",
+      "version": "0.1.0",
+      "description": "AI-DLC workflow: inception -> gate -> construction -> gate -> operations, with role subagents and guardrails.",
+      "displayName": "AIDLC",
+      "displayName_i18n": { "zh-CN": "AIDLC 工作流" },
+      "description_i18n": { "zh-CN": "AI-DLC 工作流：三阶段双门控，角色子代理与流程守卫。" },
+      "category": "developer-tools"
+    }
+  ]
+}
