@@ -519,7 +519,17 @@ intent('pk4', { 'state.json': diskState('pk4', PKBASE) });
 }
 intent('pk5', { 'state.json': diskState('pk5', { ...PKBASE, tddLockOverride: null }) });
 {
-  const r = outcome(writeState('pk5', newState({ phase: 'construction', tddLockOverride: undefined })));
+  // pk5 修复（人类裁决 2026-10-15 方案 A，见 decisions.md"TDD 解锁裁决"）：原夹具新内容
+  // 误缺五个保留键、与 pk1 字节级冲突。修复后新内容携带五保留键、仅丢弃 tddLockOverride
+  // （不在保留集合）→ 丢弃不拦 → plain allow，与 pk1（丢保留键 → deny）形成边界对照。
+  const r = outcome(writeState('pk5', newState({
+    phase: 'construction',
+    route: 'express',
+    testBaseline: { recordedAt: '2026-10-14T10:00:00Z', command: 'node scripts/tests/guard-gates.test.mjs', suites: ['scripts/tests/guard-gates.test.mjs'], total: 3, pass: 3, fail: 0 },
+    unitStatus: { U1: 'done' },
+    tddLockPaths: ['tests/a.py'],
+    tddLockOverride: undefined
+  })));
   ok('PK 集合边界: tddLockOverride 不在保留集合（且盘上为 null）→ 丢弃不拦 → plain allow',
     r.kind === 'plain', JSON.stringify(r));
 }
