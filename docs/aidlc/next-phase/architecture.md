@@ -1,6 +1,7 @@
 # Architecture: next-phase
 
 > 产出者：architect　日期：2026-10-14　来源：intent.md + prd.md
+> 修订：R1（2026-10-14，Gate#1 打回修订轮，响应 reviews/gate1-ai.md B1/B3/M4/M5/M6/M7/m8/m9/m10/m11；修订处以"（R1 修订：响应 …）"行内标注）
 
 ## 逻辑架构
 
@@ -12,16 +13,24 @@
 │                               F3 影响面步骤 / F4 对齐拍语义      │
 │  commands/aidlc/inception.md  F1 接入时分级确认                  │
 │  commands/aidlc/construct.md  F2 第 0 步基线 + 验证时回归对比    │
+│  commands/aidlc/gate.md       F1：门推断真值表按 route 分支      │
+│  skills/party-review/SKILL.md F1：gate1 评审对象集合按 route     │
+│  agents/dev.md                F1：必读清单 express 分支          │
+│  commands/aidlc/status.md     F1：工件缺失项按 route 期望清单    │
 ├─ 机制层（确定性代码，deny-only / 只注入不分类）──────────────────┤
 │  guard-gates.mjs (PreToolUse)  F4：phase→gate1 转移时机械校验    │
 │                                AC 编号集合 ⊆ 测试点映射集合，    │
-│                                缺口 → deny（既有 hook 扩展）     │
-│  auto-route.mjs (UserPromptSubmit)  F1：活跃 intent 摘要行追加   │
-│                                route 字段回显（只读注入，不分类）│
+│                                缺口/幻影 → deny（既有 hook 扩展）│
+│                                R4 扩展：覆写键保留校验（deny）   │
+│  auto-route.mjs (UserPromptSubmit)  F1：摘要行追加 route 回显    │
+│                                （只读注入，不分类）              │
+│  session-context.mjs (SessionStart) F1：Gates 行追加 route 回显  │
+│                                （同构只读注入，不分类）          │
 ├─ 状态层 ────────────────────────────────────────────────────────┤
 │  state.json                   +route（F1）+testBaseline（F2）    │
 │  decisions.md                 F1 路由裁决逐字留痕（无新标记行）  │
 │  plan.md / units/<n>.md       F3：Units 表加"影响面"列           │
+│                               F2：新增"验证命令"声明段           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,12 +38,22 @@
 
 | F | prompt 层 | hook 层 | state.json | 模板 |
 |---|---|---|---|---|
-| F1 规模分级路由 | SKILL.md §3 新增"分级接入"小节 + A1 协议 + inception.md | auto-route.mjs 摘要行追加 `route=` 回显（只读） | `route` 字段 | §7 工件模板加 express 裁剪注记 |
-| F2 测试基线 | SKILL.md Construction 第 0 步 + 验证步骤 + status/resume 展示规则 | 无 | `testBaseline` 字段 | construct.md 命令文本 |
+| F1 规模分级路由 | SKILL.md §3 新增"分级接入"小节 + A1 协议 + inception.md；**gate.md 真值表 / party-review SKILL.md / dev.md / status.md 按 route 分支（见下方触点清单）** | auto-route.mjs 摘要行 + session-context.mjs Gates 行追加 `route=` 回显（只读，同构） | `route` 字段 | §7 工件模板加 express 裁剪注记 |
+| F2 测试基线 | SKILL.md Construction 第 0 步 + 验证步骤 + status/resume 展示规则 | 无 | `testBaseline` 字段（含 `suites`） | construct.md 命令文本 + plan.md 验证命令段 |
 | F3 影响面分析 | SKILL.md Sprint Planning 步骤（Grep/Glob 扫描引用方） | 无 | 无 | plan.md Units 表加列 |
 | F4 AC↔测试点覆盖校验 | SKILL.md 对齐拍：缺口=BLOCKER 语义 | guard-gates.mjs 扩展（deny-only） | 无 | 无（模板已有 AC/映射 AC 列） |
 
-**依赖关系**：F4 依赖 prd.md/test-strategy.md 既有模板中的 `AC\d+` 编号约定（无需模板改动）；F2 的回归对比依赖 `tddLockPaths` 区分"本 intent 新增测试"；F1 的 express 裁剪不改变任何 hook 行为（见"关键决策"#3）。
+**（R1 修订：响应 B3）F2/F3 落层注记**：F2/F3 在 hook 层为"无"是**刻意落层**——基线记录与影响面扫描由编排者（模型）执行，**不存在机制层被测单元**；其验证走 E2E smoke（真实会话闭环）与流程纪律（SKILL 协议 + party-review 评审 + 人类门），**不设确定性单元断言**。qa 据此把 F2/F3 的"单元层"测试点诚实降级为流程评审/E2E。F2 中唯一可机械化的部分是"重跑对比"的集合/计数运算，但它内嵌在编排者的验证步骤里而非独立代码路径，为其单建 hook 等于把编排者变成被 hook 驱动的传声筒，超出本 intent 范围。
+
+**express 触点清单（prompt 层，全部按 `state.json.route` 分支；R1 修订：响应 M4）**——route 缺失或非法值一律按 classic 取集合：
+
+1. `plugins/aidlc/commands/aidlc/gate.md` 门推断真值表第 3 条：`phase = inception 且三工件齐` 改为 **`phase = inception 且工件齐`**，并注明工件齐的判据按 route：`route=express` → prd.md + test-strategy.md 两工件（architecture.md 由 prd.md 内联语义对齐小节替代）；`route` 缺失/非法=classic → 三工件。否则 express intent（2 工件）会被字面量"三工件齐"判为未齐而拒绝进门。
+2. `plugins/aidlc/skills/party-review/SKILL.md` 流程第 1 步：gate1 评审对象从固定"prd.md/architecture.md/test-strategy.md"改为**按活跃 intent 的 route 取评审集合**（classic 三工件；express 评审 prd.md（含内联语义对齐小节）与 test-strategy.md）。扇出前由编排者读 route 决定，SKILL 文本只写分支规则。
+3. `plugins/aidlc/agents/dev.md` Construction 必读清单：加括注"express 路线无 architecture.md，语义对齐以 prd.md 内联小节为准"——否则 express intent 的 dev 泳道按清单找不到 architecture.md。
+4. `plugins/aidlc/commands/aidlc/status.md` 工件清单报告：缺失项判定按 route 期望清单——express intent **不得**把 architecture.md 报为缺失/异常；报告增显一行 `route=<值>`（显示语义同 session-context 回显）。
+5. `plugins/aidlc/hooks/scripts/session-context.mjs`：Gates 行追加 route 回显，与 auto-route.mjs 的 `routeContract` 头行**同构、只读注入**（同格式、同非法值语义，见数据模型节）。
+
+**依赖关系**：F4 依赖 prd.md/test-strategy.md 既有模板中的 AC 编号约定——子编号制（`AC\d+\.\d+`，本仓库 prd 实际用法）与扁平制（`**AC1**`，SKILL §7 模板约定）双粒度归一规则见数据模型节（R1 修订：响应 B1）；F2 的回归对比依赖 `tddLockPaths` 与 `testBaseline.suites` 区分"本 intent 新增测试/新增套件"（R1 修订：响应 M7）；F1 的 express 裁剪不改变任何 hook 判定行为（guard-gates 不读 `route`，见关键决策 #3/#12）。
 
 ## 数据模型
 
@@ -45,11 +64,12 @@
   "route": "classic | express",
   "testBaseline": {
     "recordedAt": "ISO-8601",
-    "command": "<验证命令原文，如 npm test>",
+    "command": "<验证命令原文，须与 plan.md 声明一致>",
+    "suites": ["scripts/tests/guard-gates.test.mjs", "…"],
     "total": 0,
     "pass": 0,
     "fail": 0,
-    "failingTests": ["<失败用例名>"],
+    "failingTests": ["<FAIL 行去前缀后的行文本>"],
     "coverage": null
   }
 }
@@ -57,23 +77,63 @@
 
 **约束与降级语义**：
 
-- `route`：缺失/非法值一律视为 `classic`（fail-safe 到全量流程，与 auto-route 开关"缺失=off"的惯例一致，D11）。仅在 Inception 建 intent 时经 AskUserQuestion 确认后写入；写入后变更仅限 gate1 批准前、且须人类裁决逐字进 decisions.md。
-- `testBaseline`：Construction 第 0 步（Sprint Planning 之后、dev 写失败测试**之前**）由编排者运行验证命令并记录。`failingTests` 可解析到用例粒度时填全量名单；无法解析（runner 输出非结构化）时省略该键，退化为计数比较。`coverage` 默认 `null`（本仓库测试命令未声明覆盖率采集，不强行引入）。
+- `route`：缺失/非法值一律**生效语义**为 `classic`（fail-safe 到全量流程，与 auto-route 开关"缺失=off"的惯例一致，D11）。仅在 Inception 建 intent 时经 AskUserQuestion 确认后写入；写入后变更仅限 gate1 批准前、且须人类裁决逐字进 decisions.md。
+  - **（R1 修订：响应 M4/m2）回显语义**（auto-route.mjs 与 session-context.mjs 同构）：字段存在且合法 → `route=express` / `route=classic`；字段存在但非法 → **`route=<原值>(invalid→classic)`**（原值透传保持可观测/可调试，生效语义显式标为 classic，与 T06"按 classic 兜底、不崩溃"一致）；字段缺失（存量 intent）→ **不追加任何 route 字样**——保持 v1.1 输出字节级不变，T03 的零行为变化断言才成立。
+- `testBaseline`：Construction 第 0 步由编排者运行验证命令并记录（时序锚点定义见决策 #7）。`command` 记录实际执行原文，与 plan.md 声明不一致 = resume 对账差异项（R1 修订：响应 M7/m5）。`suites` 记录基线时**参与统计的套件文件清单**，回归比对只覆盖该清单（套件集合漂移排除，见决策 #6）。`failingTests` 可解析到用例粒度时填全量名单；无法解析时省略该键，退化为计数比较。`coverage` 默认 `null`。
+  - **（R1 修订：响应 M7）验证命令的规范来源与本 intent 建议值**：命令原文以 plan.md"验证命令"声明段为规范来源，state 只记实际执行原文（两者不一致 = 对账差异）；plan.md 未声明或存量 intent 无声明时，Sprint Planning 用 AskUserQuestion 向人类询问后回填。本 intent 建议声明值：`node scripts/tests/guard-gates.test.mjs && node scripts/tests/auto-route.test.mjs`——check-plugin.sh 第 3/4 步（`plugins validate`/`plugins list`）依赖本地 ZCode 二进制（`ZCODE_CJS` 或安装路径探测），跨环境不可复现，不纳入基线口径；两套件纯 node 运行、输出结构化，是可复现的最小集。最终值以 plan.md 声明/人类裁决为准。
+  - **（R1 修订：响应 M7）pass/fail 计数解析口径（最小约定）**：基线与回归重跑共用同一解析语义。本仓库两套件输出结构一致——逐行 `ok ` / `FAIL ` 前缀的用例行（guard-gates.test.mjs:43、auto-route.test.mjs:51 同约定）+ 尾行 `ALL <n> SCENARIOS|CHECKS PASSED`（失败尾行 `<bad>/<n> FAILED`）。解析约定：`/^ok\b/` 计 pass、`/^FAIL\b/` 计 fail，total = pass + fail；尾行 `ALL <n> …` 的 n 与 pass+fail 交叉核对，**不一致或尾行缺失 = 解析失败 → 按"基线不可用"显式记录并告警**（T12 语义，不得虚构 0 fail）；`suites` 清单内多套件逐套件解析后求和。`failingTests` 取 FAIL 行去前缀后的整行文本作为用例标识（两套件 FAIL 行格式略异，取整行是兼容两者的最小确定性约定）。
 - 存量 intent 无这两个字段：续跑零行为变化——`route` 缺省 classic 走全量协议；`testBaseline` 缺失时验证步骤退化为现状（"验证命令通过"即满足），`/aidlc:status` 显示"无基线"。
-- **覆写保留规则扩展**（SKILL.md §2 补一条）：编排者整体覆写 state.json 时，除 history 外，`route`/`testBaseline`/`unitStatus` 等既有字段也必须原样保留，除非本次变更明确改它——与 guard-gates 乐观锁同向（防丢字段）。
+- **（R1 修订：响应 M6）覆写保留 = R4 确定性扩展，非纯 prompt 纪律**：guard-gates Rule 4 在既有 history 乐观锁同块内增加**键保留校验**（实现要点见决策 #11）——整体覆写丢失 `route`/`testBaseline`/`unitStatus`/`tddLock`/`tddLockPaths` 中的既有键 → deny。原"SKILL §2 补一条覆写保留纪律"的方案降级为辅助（prompt 层仍写明，但不再暗示它与机制层同等可靠——M6 指出的正是这种暗示失实）。
 - hook 侧兼容：`findActiveIntent`/`loadIntent` 只 `JSON.parse`，新字段透传无害；guard-gates 不做 schema 校验，新字段不触发任何既有规则。
 
-### F4 机械校验的提取规则（guard-gates.mjs 内，确定性正则）
+### F4 机械校验规格（guard-gates.mjs 内，确定性实现；本节整体为 R1 修订：响应 B1/M5/m11）
 
-- 触发点：Write state.json 且 `old.phase !== "gate1" && new.phase === "gate1"`（仅转移瞬间校验，覆写 updatedAt 等不重复触发）。
-- prd.md 侧：提取 `## 验收标准` 小节内全部 `/\bAC\d+\b/g`，得集合 P。
-- test-strategy.md 侧：提取全文全部 `/\bAC\d+\b/g`，得集合 T（宽松提取，见"安全与权限"的已知局限）。
-- 判定：`P - T ≠ ∅` → **deny**，reason 列出缺口编号；`P = ∅` 或任一文件缺失/不可解析 → **allow**（无法机械验证，交人类门兜底，见决策 #4）。
-- express 路线同样适用（express 保留 prd + test-strategy 两工件，见决策 #3）。
+**触发点**：Write `state.json` 且"盘上旧 state 可解析且 `old.phase !== "gate1"`，新内容 `new.phase === "gate1"`"（仅转移瞬间校验，覆写 updatedAt 等不重复触发）。另有两条非典型路径的处置见下方"绕过路径处置"。
 
-### plan.md 模板变更（F3）
+**校验流水（按序短路）**：
 
-Units 表加一列：`| # | Unit | 目标 | 涉及文件 | 影响面 | 测试 | 验收 |`。影响面取值 `low | med | high（引用方 N）`：low=无外部引用方/单一消费方；med=少量同层消费方；high=跨层/共享类型/引用方众多。high 的 unit 必须在"执行顺序"中说明拆分或排序理由。
+0. **工件存在性（方向零）**：intent 目录下 `prd.md` 或 `test-strategy.md` 任一**缺失 → deny**（classic 与 express 同规——两条路线的工件集合都包含这两件）。理由：转移瞬间工件缺失是协议违约，不是解析局限；deny 消息指向 `/aidlc:resume` 对账。此项同时封死"先写 state(phase=gate1) 后补工件"的顺序绕过（见绕过路径 c）。
+1. **prd 侧小节定位**：读文件去 BOM（U+FEFF）后按行扫描；小节起点 = **`^## 验收标准` 前缀匹配**（实际标题是 `## 验收标准（可测）`，不得用全等）；小节止于下一个 `^## `（`### ` 不截断）；行尾容忍 `\r`（CRLF 容错）。找不到该小节 → 不可解析分支。
+2. **编号 token 提取**：`AC\d+(?:\.\d+)?`；**编号后紧跟字母的占位记法（如 `AC1.x`、`AC4.x`）不作为编号证据**（负向前瞻排除）——prd 侧小节标题 `### F1 规模分级路由（AC1.x）` 之类的记法因此不注入任何集合。
+3. **P 集合（prd 验收标准小节内）双粒度归一**：
+   - P 内存在子编号 token（`ACn.m`）→ **子编号制**：P = 全部子编号 token 的集合；裸组 token（`ACn`，如标题/分组行产生）仅当**无法归入任何已有组**（不存在该组任一子编号）时判为**约定混提 → 不可解析分支**，否则视为组封面丢弃、不入 P（"子编号归一到其组"——比对原子是子编号）。
+   - P 内无任何子编号 → **扁平制**（SKILL §7 模板风格）：P = 全部 `ACn` token 的集合。
+   - 两约定**不混提**：比对粒度由 P 唯一决定，同一对小工件内两种粒度并存即视为格式漂移，走不可解析分支（不猜测、不展开）。
+4. **T 集合（test-strategy.md 全文）提取与排除**：
+   - **范围片段整段剔除**：两个编号之间含范围连接符（`–`／`—`／`~`／`..`／`…`／`至`／数字间 `-`）的片段（如 `AC1.1–AC4.4`、`AC1.1–AC4.x`）**整体剔除，两端 token 均不入 T**——范围声明的映射语义机械层无法展开验证，宁可少算（假阴性交人工）不可多算（假覆盖）。
+   - **分隔符复合格整格剔除**：`/` 分隔的复合单元格（如 `AC1.2 / 全局`）**整格不入 T**——"全局"类修饰使该映射非专属，不得作为单点映射证据。
+   - 其余 token 按 P 的制式取同粒度：子编号制下裸组 token 不入 T（组级映射不算子级证据）；扁平制下取 `ACn`。
+5. **判定**：
+   - `P − T ≠ ∅` → **deny**，reason 列出缺口编号（子编号制按子编号粒度列出，不再折叠）。
+   - `T − P ≠ ∅` → **deny**（幻影编号，AC4.3 方向二），reason 列出幻影编号（选 deny 不选告警的理由见决策 #10）。
+   - `P = ∅`、无验收标准小节、约定混提 → **不可解析分支：allow + 显式披露**——emit `permissionDecision: "allow"` 并在 `permissionDecisionReason` 携带披露文本（"F4 无法机械校验：<原因>，交人类门与 party-review 复核"）。allow+reason 与 deny 同构、lib/state.mjs strict schema 零改动。**非静默**是红线：intent.md 原文禁的是 fail-open *静默*失效（B2），披露式 allow 合规；PRD 非目标措辞的精确化由 pm 同轮修订、gate1 复审追认。
+
+**绕过路径处置（每条给明确选择）**：
+
+- **a. brand-new intent 早退（guard-gates.mjs:66 `emit(null)`）→ 封堵**：创建时盘上无 state.json，若新内容 `phase === "gate1"` 或 `gates.gate1 === "approved"`，则在该分支内执行与正常路径相同的回执校验 + F4 工件存在性校验（此时刻两工件通常尚不存在 → deny）。理由：复用既有积木、零新依赖；留着绕过等于 F4 锚点可被"删除重建 state"无成本跳过。
+- **b. 损坏态修复路径（guard-gates.mjs:69-73）→ 披露 + 人类门兜底（不封堵）**：修复内容含 `gates.*=approved` 已有机读回执校验；F4 不强制，但 `/aidlc:resume` 对账协议新增一项——修复后 state 声称 `phase ≥ gate1` 而 F4 未随修复重跑时，对账差异表必须列出"F4 未机械校验（损坏修复路径）"披露行并在 gate1 人审呈示。理由：修复路径的首要不变量是"损坏永远可修复"；封堵会在 prd 与 state **同时**损坏时制造死锁（写 state 被存在性校验挡、补 prd 又被损坏态 fail-closed 挡），违背"corruption is fixable but never silently disables the guards"的既有承诺。
+- **c. 先写 state(phase=gate1) 后补工件 → 已被方向零封堵**；残余 = 转移通过后再改工件内容不重触发校验。**披露为已知残余**：兜底 = gate1 人类审批审的就是最终工件 + party-review"编号对不上"必查项；对工件做连续内容监控会把 deny-only hook 变成内容审查器，明确不做；PRD 修订后的重跑时机归 OQ4 人类裁决。
+
+**回归清单（新增场景，与既有 28 场景合并为 guard-gates 回归集）**：
+
+1. 子编号不折叠：AC4.2/4.3/4.4 全无映射时 deny（修复 B1 的恒通过缺陷）
+2. 范围片段剔除：`AC1.1–AC4.4`、`AC1.1–AC4.x` 不产生 T 证据
+3. 分隔格剔除：`AC1.2 / 全局` 不产生 T 证据
+4. 占位记法排除：`（AC1.x）` 不注入 P/T
+5. 小节前缀匹配：`## 验收标准（可测）` 命中；`### ` 不截断小节
+6. CRLF 行尾 + BOM 头的 prd 可正常提取
+7. 扁平制工件按 `ACn` 粒度正常校验（SKILL §7 模板风格）
+8. 方向二：`T − P ≠ ∅` deny
+9. 工件缺失 deny（prd / test-strategy 分别缺失各一例）
+10. 不可解析 allow + 披露文本存在
+11. 创建即 phase=gate1 的 brand-new 写入 deny
+12. 非 gate1 转移不触发（既有回归保留）
+13. express 两工件路线同样适用（无 architecture.md 不影响 F4）
+
+### plan.md 模板变更（F3 + F2 命令声明）
+
+- Units 表加一列：`| # | Unit | 目标 | 涉及文件 | 影响面 | 测试 | 验收 |`。影响面取值 `low | med | high（引用方 N）`：low=无外部引用方/单一消费方；med=少量同层消费方；high=跨层/共享类型/引用方众多。high 的 unit 必须在"执行顺序"中说明拆分或排序理由。
+- **（R1 修订：响应 M7/m5）新增"验证命令"声明段**：Sprint Planning 在此声明基线/回归共用的验证命令原文（规范来源）；缺省（未声明或存量 intent）时 Sprint Planning 用 AskUserQuestion 向人类询问，裁决逐字进 decisions.md 后回填 plan.md。`state.testBaseline.command` 与 plan.md 声明不一致 = resume 对账差异项。
 
 ## 与 PRD 的语义对齐表
 
@@ -82,25 +142,28 @@ Units 表加一列：`| # | Unit | 目标 | 涉及文件 | 影响面 | 测试 | 
 | PRD 动词 | 物理语义 | 说明 |
 |---|---|---|
 | 分级（F1）→ AC1.1、AC1.3、AC1.4 | state.json 写入 `route` 字段 + decisions.md 逐字留痕 | AI 提议、AskUserQuestion 确认；无 hook 参与判定 |
-| 裁剪（F1）→ AC1.2 | express 路线不派发 architect、不产 architecture.md；party-review 扇出压缩 | 纯 prompt 层裁剪；hook 强制项（人类回执、decisions 留痕、TDD 锁）零裁剪 |
-| 记录（F2）→ AC2.1、AC2.3 | Construction 第 0 步运行验证命令，结果写 state.json `testBaseline` | 单一事实源在 state.json，不双写 plan.md |
-| 对比（F2）→ AC2.2 | gate2 验证时重跑同一命令，新失败=回归=BLOCKER | 用例粒度优先，计数粒度兜底 |
-| 扫描（F3）→ AC3.1、AC3.2、AC3.3、AC3.4 | Sprint Planning 用 Grep/Glob 查引用方，结果写 plan.md 影响面列 | 纯 prompt 层，无机制强制 |
-| 校验（F4）→ AC4.1、AC4.2、AC4.3 | guard-gates.mjs 在 phase→gate1 转移时正则提取比对，缺口 deny | 机制层强制；不可解析时 fail-open 交人类门 |
+| 裁剪（F1）→ AC1.2 | express 路线不派发 architect、不产 architecture.md；party-review 扇出压缩；五处触点按 route 分支（见触点清单） | 纯 prompt 层裁剪；hook 强制项（人类回执、decisions 留痕、TDD 锁）零裁剪 |
+| 记录（F2）→ AC2.1、AC2.3 | Construction 第 0 步运行验证命令，结果写 state.json `testBaseline` | 单一事实源在 state.json，不双写 plan.md；命令规范来源 = plan.md 声明（R1：M7） |
+| 对比（F2）→ AC2.2 | gate2 验证时重跑同一命令，新失败=回归=BLOCKER | 用例粒度优先，计数粒度兜底；比对范围限 `suites` 清单（R1：M7） |
+| 扫描（F3）→ AC3.1、AC3.2、AC3.3、AC3.4 | Sprint Planning 用 Grep/Glob 查引用方，结果写 plan.md 影响面列 | 纯 prompt 层，无机制强制；无被测单元，验证走 E2E/流程评审（R1：B3） |
+| 校验（F4）→ AC4.1、AC4.2、AC4.3 | guard-gates.mjs 在 phase→gate1 转移时按提取规格机械比对：缺口 deny、幻影 deny | 机制层强制；缺失=deny、不可解析=allow+披露交人类门（R1：B1/M5） |
 
 ## 关键决策与理由
 
 | # | 决策 | 为什么 |
 |---|---|---|
-| 1 | F1/F2/F3 的判定与执行全部落 prompt 层（SKILL.md + 命令），state.json 只存结果字段；hook 唯一新增行为是 F4 的 deny 校验和 auto-route 的 route 回显 | D11 既定模式：hook 误判不可逆所以只注入不分类；分级提议、影响面分级都是判断性工作，机制层做不了也不该做。route 回显与现有 unitStatus 回显同构（只读注入）。 |
+| 1 | F1/F2/F3 的判定与执行全部落 prompt 层（SKILL.md + 命令），state.json 只存结果字段；hook 新增行为仅三项：F4 deny 校验、auto-route/session-context 的 route 只读回显、guard-gates R4 键保留校验 | D11 既定模式：hook 误判不可逆所以只注入不分类；分级提议、影响面分级都是判断性工作，机制层做不了也不该做。route 回显与现有 unitStatus 回显同构（只读注入）。（R1 修订：响应 M4——回显补齐 session-context 触点；响应 M6——R4 扩展入列） |
 | 2 | `route` 缺失=classic、`testBaseline` 缺失=无基线旧行为 | intent.md 约束"存量用户零行为变化"；与 config.json"缺失/畸形=off"的 fail-safe 惯例（D11）一致，升级安全。 |
-| 3 | express 裁剪清单 = ① 不产 architecture.md（语义对齐约定并入 prd.md 内联小节）② party-review 交叉评审压缩为单轮合并评审（或人类直审两工件）③ plan.md 允许单 unit ④ Operations 的 retro.md 改为人类可选。**不裁**：gate1/gate2 人类审批回执、decisions.md 逐字留痕、TDD 锁、guard-gates/guard-paths 全部 hook、F2 基线、F4 校验 | 直接回应 qa 风险：§0 守卫边界声明"门控处的人类复核是唯一可信兜底"——express 裁剪的全部是 **AI 侧产出与互审扇出**（prompt 层便利），机制层强制项（deny-only hook、人类回执、只追加留痕）一项不动。guard-gates 对 plan.md/units 的门禁、回执新鲜度校验对两条路线字节级一致。参照 aidlc-workflows profile（Express 10/33 仍保留门）与 BMAD 规模决策树（research-digest D12）。 |
-| 4 | F4 机械校验放 guard-gates.mjs（既有 PreToolUse deny hook 扩展），不放编排者 grep、不新建 hook | 任务要求"hook 是确定性代码，不能依赖模型"——编排者 grep 本质是模型自觉执行，长上下文下会稀释（§0 常驻约束教训）。guard-gates 已拦截 state.json 写入且已读 decisions.md 做回执校验，扩展它读 prd/test-strategy 是同构改动，不新增 hook 进程与 hooks.json 条目（每多一个 hook 多一份 fail-open 面）。触发点选 phase→gate1 转移：这是"工件齐"的唯一机制锚点。 |
-| 5 | F4 在"文件缺失/零 AC 可提取"时 allow（fail-open），在"提取成功且有缺口"时 deny（fail-closed） | 反向（一律 fail-closed）会把格式漂移的存量 intent 硬挡在 gate1 外，违反兼容性约束。fail-open 侧由人类门 + party-review 既有"编号对不上"必查项兜底——符合 D3 定位：hook 是限速带不是安全边界。已知局限（test-strategy 全文提取可能把"缺口"小节提到的 AC 算作已映射）在同一兜底覆盖内，明文写入本文档即尽责披露。 |
-| 6 | F2 基线只写 state.json，不双写 plan.md；回归判定 = 重跑后"基线中 pass 的用例现在 fail"（用例粒度）或 "fail 总数 > 基线 fail"（计数粒度兜底），且排除本 intent 新增测试文件（按 tddLockPaths）中的用例 | 单一事实源防双写漂移；plan.md 在基线记录前已提交确认，回写会制造额外提交噪音。排除本 intent 新测试是因为 TDD 流程中它们必然先红后绿，不计入回归。来源：aidlc-workflows Test Baseline Protocol（research-digest B6：改前记录 total/pass/fail，之后新失败=回归）。 |
-| 7 | F2 对比时机 = Construction 第 4 步（声明"验证命令通过"之前），回归=BLOCKER 须修复或人类在 decisions.md 逐字豁免 | 与 aidlc-workflows 一致（验证前比对）；豁免路径保留人类最高裁决权，与"门禁永不自动、人类始终可裁"的哲学一致。 |
-| 8 | F3 影响面落 plan.md 新列，不进 state.json、不做 hook 强制 | 影响面是规划时的判断产物（research-digest B7，aidlc-workflows Blast Radius 也是"改前强制"的流程纪律而非机器门禁）；A3 拆分确认（人工）与 party-review 是自然的人工复核点。做成 hook 强制需要理解 import 语义，超出确定性正则能力，硬做只会 fail-open。 |
-| 9 | route 允许 express→classic 升级（gate1 批准前、人类裁决留痕），禁止 classic→express 降级 | 升级是补工件，安全；降级是追溯性豁免已承诺的工件与评审，会破坏审计链语义。 |
+| 3 | express 裁剪清单（**默认方案，最终以 PRD OQ1 人类裁决为准，裁决后回填本表**）= ① Inception 不产 architecture.md（语义对齐约定并入 prd.md 内联小节）② party-review 交叉评审压缩为单轮合并评审（或人类直审两工件）③ plan.md 允许单 unit ④ Operations 的 retro.md 改为人类可选。**不裁**：gate1/gate2 人类审批回执、decisions.md 逐字留痕、TDD 锁、guard-gates/guard-paths 全部 hook、F2 基线、F4 校验 | 直接回应 qa 风险：§0 守卫边界声明"门控处的人类复核是唯一可信兜底"——express 裁剪的全部是 **AI 侧产出与互审扇出**（prompt 层便利），机制层强制项一项不动。guard-gates 对 plan.md/units 的门禁、回执校验（回执存在性 + 晚于最近 GATE-REJECTED，行序比较）对两条路线字节级一致。参照 aidlc-workflows profile（Express 10/33 仍保留门）与 BMAD 规模决策树（research-digest D12）。（R1 修订：响应 M7——清单显式标注为待裁决默认方案，不再与 OQ1 形成"既已决策又重开"的矛盾；响应 m10——"回执新鲜度"措辞更正为"回执存在性 + 晚于最近 GATE-REJECTED"，机制实为 checkGateReceipts 的行序比较而非时间戳新鲜度） |
+| 4 | F4 机械校验放 guard-gates.mjs（既有 PreToolUse deny hook 扩展），不放编排者 grep、不新建 hook | 任务要求"hook 是确定性代码，不能依赖模型"——编排者 grep 本质是模型自觉执行，长上下文下会稀释（§0 常驻约束教训）。guard-gates 已拦截 state.json 写入且已读 decisions.md 做回执校验，扩展它读 prd/test-strategy 是同构改动，不新增 hook 进程与 hooks.json 条目（每多一个 hook 多一份 fail-open 面）。触发点选 phase→gate1 转移：这是"工件齐"的唯一机制锚点。（R1 修订：响应 B1——提取规格按双粒度归一/排除规则/前缀匹配完整化，见数据模型节 F4 规格） |
+| 5 | F4 的失败边界三分：**工件缺失=deny**（fail-closed）；**提取成功但有缺口/幻影=deny**（fail-closed）；**文件在但不可解析（无小节/P=∅/约定混提）=allow + 显式披露**（披露式 fail-open） | intent.md 红线原文是"新 hook 不得 fail-open **静默**失效"——披露式 allow 与之一致，合规前提是 pm 同轮把 PRD 非目标精确化为"未经披露的 fail-open / 主路径不得 fail-open"并显式豁免本披露分支（reviews/gate1-ai.md B2 裁决方向，复审追认）。缺失改 deny 消灭顺序绕过（gate1-ai.md M5），且两条路线都要求这两件工件存在，不误伤 express。不可解析若也 fail-closed，会把格式漂移的存量 intent 硬挡在 gate1 外，违反 U5/AC1.4/AC4.4 兼容约束——此侧由人类门 + party-review"编号对不上"必查项兜底，符合 D3 定位：hook 是限速带不是安全边界。原决策"文件缺失→allow"作废。 |
+| 6 | F2 基线只写 state.json，不双写 plan.md；回归判定 = 重跑后"基线中 pass 的用例现在 fail"（用例粒度）或"fail 总数 > 基线 fail"（计数粒度兜底）；**比对范围 = `testBaseline.suites` 清单内、且不在 `tddLockPaths` 中的用例** | 单一事实源防双写漂移。排除本 intent 新测试（tddLockPaths）是因为 TDD 流程中它们必然先红后绿；**排除基线后新增的套件**（`suites` 清单外科件，如本 intent 自己要新增的 route-profile/test-baseline/blast-radius/ac-coverage 四套件）是同一逻辑的套件级推广——否则"基线外新失败=回归"会判定本 intent 自己的新套件自阻（gate1-ai.md M7 套件集合漂移）。存量 intent 无 `suites` 键 → 退化为 tddLockPaths 排除法。来源：aidlc-workflows Test Baseline Protocol（research-digest B6）。**已知局限（披露，gate1-ai.md m9）**：计数兜底存在"等量置换"漏报——一个基线 pass 用例翻红恰被一个基线 fail 用例翻绿抵消时 fail 总数不变；缓解 = `failingTests` 可解析时永远用名单比对，计数兜底仅 runner 输出非结构化时启用，且启用计数的 intent 在 gate2 人审呈示"本次为计数口径"披露行。 |
+| 7 | F2 对比时机 = Construction 第 4 步（声明"验证命令通过"之前），回归=BLOCKER 须修复或人类在 decisions.md 逐字豁免 | 与 aidlc-workflows 一致（验证前比对）；豁免路径保留人类最高裁决权。**（R1 修订：响应 m8）"第 0 步"的时序锚点统一定义**：唯一硬约束是**基线记录先于任何本 intent 测试文件写入（含 dev 失败测试）**；落点 = Sprint Planning 内、"验证命令"声明之后立即执行——"第 0 步"是这个子步骤的名称而非独立阶段。SKILL.md Construction 协议修订时在第 1 步（Sprint Planning）下加"0. 记录基线"子条目（或将步骤清单显式改为 0–4 编号），架构以时序锚点为准、不与现行 1–4 编号绑定，消除表述冲突。 |
+| 8 | F3 影响面落 plan.md 新列，不进 state.json、不做 hook 强制 | 影响面是规划时的判断产物（research-digest B7，aidlc-workflows Blast Radius 也是"改前强制"的流程纪律而非机器门禁）；A3 拆分确认（人工）与 party-review 是自然的人工复核点。做成 hook 强制需要理解 import 语义，超出确定性正则能力，硬做只会 fail-open。**（R1 修订：响应 B3）落层注记**：F2/F3 无机制层被测单元，其验证走 E2E smoke 与流程纪律（prompt 层）——qa 据此降级对应测试点层级。 |
+| 9 | route 允许 express→classic 升级（gate1 批准前、人类裁决留痕），禁止 classic→express 降级 | 升级是补工件，安全；降级是追溯性豁免已承诺的工件与评审，会破坏审计链语义。（R1 修订注：gate1-ai.md M2 指出 T06/T07 所测语义缺 PRD AC 背书——语义本身保留于本架构，AC 背书由 pm 修订补齐；非法值回显语义见决策 #12） |
+| 10 | **（新增，R1：响应 M5）F4 方向二（`T − P ≠ ∅` 幻影编号）机械化为 deny，不采告警** | AC4.3 已把幻影定为 BLOCKER——机械层若只告警就与 PRD 语义分叉，对齐拍复核过的错位会以"无强制"状态复发。误 deny 的修复路径是删除/改正 test-strategy 中的陈旧引用，与缺口 deny 同级、无绕过通道、成本一次性；T 集合的范围片段与复合格剔除规则已把正文讨论性文本的误报源压到最低。 |
+| 11 | **（新增，R1：响应 M6）覆写保留做 R4 确定性扩展（键保留校验），不做纯 prompt 纪律** | `testBaseline` 被覆写丢失 = 回归门**静默失效**（弱化方向），prompt 纪律在长上下文下会稀释（§0 教训），"与乐观锁同向"的暗示不能代替机制。实现要点：guard-gates.mjs Rule 4 块内、history 校验同模式——读盘上 state，对 `preserveKeys = ['route','testBaseline','unitStatus','tddLock','tddLockPaths']` 逐一检查：盘上键 defined 且非 null、而新内容缺该键或为 null → deny（消息列出丢失键，指示重读磁盘 state 后完整保留再写）。**值变更不拦截**：unitStatus per-unit 推进、gate1 批准前的 route 升级留痕、tddLockPaths 并集都是合法写路径，值冻结会把正常流程机械卡死；由此 `testBaseline` 值篡改是残余风险（弱化方向），披露并由 resume 对账新增项（呈示 `testBaseline.recordedAt` 与对应 git 提交）+ gate2 人审兜底。`tddLockOverride` 暂不入集合（解锁后是否清空无既定语义，入集合会把合法解锁路径卡死）。**覆盖洞披露**：损坏修复路径不经 Rule 4（`own==null` 早退）——由 resume 对账项兜底：修复后 state 缺这些键而 phase 已过对应阶段 → 列差异报告人类。 |
+| 12 | **（新增，R1：响应 M4/m2）route 回显与非法值显示语义：`route=<原值>(invalid→classic)`；字段缺失不回显** | 非法值原值透传保持可观测（直接改写显示值会掩盖脏数据），生效语义显式标 classic（与决策 #2 fail-safe 一致，T06 断言可写）；存量 intent 不追加 route 字样，保证 v1.1 输出字节级不变（T03 零行为变化）。auto-route.mjs 与 session-context.mjs 用同一格式语义，避免两处回显漂移。 |
 
 ## 安全与权限
 
@@ -108,24 +171,27 @@ Units 表加一列：`| # | Unit | 目标 | 涉及文件 | 影响面 | 测试 | 
 
 | 实体 | 资源 | 动作 |
 |---|---|---|
-| 编排者（主会话） | `docs/aidlc/<slug>/state.json` | Write（整体覆写，保留 history 及全部既有字段） |
+| 编排者（主会话） | `docs/aidlc/<slug>/state.json` | Write（整体覆写，保留 history 及全部既有键——R4 键保留校验强制） |
 | 编排者（主会话） | `docs/aidlc/<slug>/decisions.md` | Write 追加（Edit 被 guard-gates deny，不变） |
 | guard-gates.mjs | `prd.md` / `test-strategy.md` / `decisions.md` | 只读（F4 提取与既有回执校验） |
-| auto-route.mjs | `state.json` / `config.json` | 只读（注入摘要不分类，D11 不变） |
+| auto-route.mjs | `state.json` / `config.json` | 只读（注入摘要不分类，D11 不变；新增 route 回显同为只读拼接） |
+| session-context.mjs | `state.json` / `decisions.md` | 只读（既有 resume 注入；新增 route 回显同为只读拼接，D11 不变） |
 | 角色 subagent | state.json / decisions.md | 禁止（既有规则不变） |
 
-**fail-open 风险分析（新增改动逐项）**：
+**fail-open 风险分析（新增改动逐项，R1 修订：响应 B2/M5）**：
 
-1. **guard-gates F4 扩展**：新代码路径在解析异常时必须走 allow 分支并静默通过（与既有"per-intent 损坏 skip 不 fatal"风格一致），但**缺口命中必须 deny**——deny 分支不受解析异常影响（提取成功才进入比对）。风险点：正则误提取导致误 deny（如 prd 正文示例里出现 AC99）。缓解：提取限定 `## 验收标准` 小节；误 deny 的修复路径是改正工件，无绕过通道，符合 deny-only 哲学。回归要求：guard-gates 28 场景全绿 + 新增场景（缺口 deny / 全覆盖 allow / 缺文件 allow / 存量格式漂移 allow / 非 gate1 转移不触发）。
-2. **auto-route route 回显**：只读拼接既有字段，不写文件、不改判定逻辑，零新风险。
-3. **express 裁剪**：不触碰任何 hook 代码路径——guard-gates 不读 `route` 字段，两条路线机制强制完全一致。这是刻意的决策（见决策 #3）：裁剪面 100% 落在 prompt 层，§0 守卫边界声明无需修订。
-4. **state.json 新字段**：hook 不做 schema 校验，未知字段透传；覆写保留规则（决策见数据模型节）防编排者丢字段。
+1. **guard-gates F4 扩展**：失败边界三分后唯一 fail-open 分支是"不可解析 → allow"，且**必须携带披露文本，禁止静默**（allow+reason 与 deny 同构，strict schema 零改动）。工件缺失与缺口/幻影均 deny，deny 分支不受解析异常影响（提取成功才进入比对）。风险点：误 deny（正文讨论性 AC 字样进 T 造成幻影误报）。缓解：范围片段/复合格/占位记法三类剔除规则 + 小节限定；误 deny 修复路径是改正工件，无绕过通道。回归要求：既有 28 场景全绿 + F4 规格节列出的 13 个新场景。
+2. **guard-gates R4 键保留扩展**：纯 deny 增量，无 fail-open 面；风险是误伤合法写路径——已按"键保留、值放行"收窄校验，`tddLockOverride` 明确不入集合；损坏修复路径的覆盖洞由 resume 对账项披露兜底（决策 #11）。
+3. **auto-route / session-context route 回显**：只读拼接既有字段，不写文件、不改判定逻辑；非法值按"原值+(invalid→classic)"显示，零新风险。
+4. **express 裁剪**：不触碰任何 hook 判定代码路径——guard-gates 不读 `route` 字段（F4 工件存在性对两条路线同规），两条路线机制强制完全一致。这是刻意的决策（见决策 #3）：裁剪面 100% 落在 prompt 层，§0 守卫边界声明无需修订。
+5. **state.json 新字段**：hook 不做 schema 校验，未知字段透传；丢失由 R4 键保留校验机械拦截（决策 #11），`testBaseline` 值篡改与计数等量置换（m9）是披露的残余风险，兜底 = resume 对账呈示 + gate2 人审。
+6. **顺序绕过残余**：F4 只在 phase→gate1 转移瞬间校验，转移后修改工件内容不重触发——披露为已知残余，兜底 = gate1 人审（审的是最终工件）+ party-review 编号必查项；PRD 修订后的重跑时机归 OQ4。
 
-**守卫语义触碰声明**：本架构不修改 D2（deny-only）、D3（限速带定位）、D11（只注入不分类）任何一条；guard-paths、TDD 锁、回执新鲜度、乐观锁、decisions 只追加，五项机制零改动。
+**守卫语义触碰声明（R1 修订：响应 M6/m10）**：本架构不修改 D2（deny-only）、D3（限速带定位）、D11（只注入不分类）任何一条；guard-paths、TDD 锁、回执校验（机制 = 回执**存在性 + 晚于最近 GATE-REJECTED** 的行序比较，措辞以 guard-gates.mjs 头注释为准）、decisions 只追加五项机制零语义改动。对既有机制的唯一触碰是 guard-gates 内的两处 **deny-only 增量**：Rule 4 校验集扩展（键保留）与新增 F4 校验分支——均为收紧方向，不放松任何既有拦截。
 
 ## 开放问题（需人类裁决）
 
-- [ ] express 路线 Gate#2 是否保留独立 verifier？默认方案：人类审批强制不变，verifier 由编排者按影响面（F3 列）建议——high 必派、low/med 可省。
-- [ ] express 路线 Operations 阶段 retro.md 默认值：人类可选（gate2 批准时一并裁决），还是一律省略？默认方案取前者。
+- [ ] express 路线 Gate#2 是否保留独立 verifier？（OQ1 子项，与 pm 的 OQ1 裁决一并处理，不单独重开）默认方案：人类审批强制不变，verifier 由编排者按影响面（F3 列）建议——high 必派、low/med 可省。
+- [ ] express 路线 Operations 阶段 retro.md 默认值（OQ1 子项）：人类可选（gate2 批准时一并裁决），还是一律省略？默认方案取前者。
 - [ ] F4 对"AC 被人类判定不可测"的出路：默认方案是 pm 修订 prd 移除/改写该 AC（无绕过通道）；是否需要一个 decisions.md 逐字豁免 + hook 识别豁免标记行的机制？（倾向不做——豁免标记行会让 hook 解析 decisions 的语义变重，且可被滥用。）
 - [ ] `testBaseline.coverage` 是否在本 intent 内接入覆盖率采集？默认 null 不采集（本仓库验证命令未声明覆盖率工具）。
