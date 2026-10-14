@@ -9,7 +9,22 @@
 //           and that receipt must be MORE RECENT than any GATE-REJECTED line
 //           for the same gate (a rejection voids earlier approvals).
 //   Rule 4  state.json full overwrites must preserve every existing history entry
-//           (append-only history = optimistic lock against concurrent writers).
+//           (append-only history = optimistic lock against concurrent writers)
+//           AND every existing preserveKey (route / testBaseline / unitStatus /
+//           tddLock / tddLockPaths — architecture decision #11: key loss is
+//           denied, value changes pass; the corrupt-repair path is exempt and
+//           disclosed via /aidlc:resume instead).
+//   Rule 7  (F4, deny-only) at the phase→gate1 transition the prd "## 验收标准"
+//           section and the test-strategy "## 测试点清单"表 "映射 AC" column are
+//           mechanically compared: missing artifact(s) = deny; coverage gaps
+//           (P−T≠∅) and phantom ACs (T−P≠∅) = deny; artifacts present but
+//           unparseable (no section / P=∅ / mixed conventions / no 映射 AC
+//           header) = allow WITH disclosure (never silent). The same check runs
+//           on brand-new intents whose first state.json write already claims
+//           phase=gate1 or gate1=approved (bypass-a closure). The corrupt-repair
+//           path stays exempt (bypass-b disclosure). guard-gates never reads
+//           state.route for any branch decision — express does not weaken
+//           guards.
 //   Rule 5  decisions.md is append-only: full overwrite allowed only on creation
 //           or as a pure append (existing content preserved verbatim as prefix).
 //   Rule 6  state.json / decisions.md are Write-only: Edit's old_string can match
@@ -57,13 +72,193 @@ function checkGateReceipts(text, intentDir) {
   }
 }
 
+// Allow WITH disclosure — same strict schema as deny (PreToolUse +
+// permissionDecision/Reason). Used only by the F4 unparseable branch, which is
+// a disclosed fail-open, never a silent one.
+function allowWith(reason) {
+  emit({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'allow',
+      permissionDecisionReason: String(reason).replace(/[\x00-\x1f]/g, ' ')
+    }
+  });
+}
+
+/* ─── F4 mechanical AC↔test-point coverage (architecture "F4 机械校验规格") ─── */
+
+// Keys an overwrite may not DROP (decision #11). Value changes always pass;
+// tddLockOverride is deliberately NOT in the set (unlock semantics undefined).
+const PRESERVE_KEYS = ['route', 'testBaseline', 'unitStatus', 'tddLock', 'tddLockPaths'];
+
+// AC number token: ACn or ACn.m, not followed by an optional dot + letter —
+// `AC1.x`-style placeholders therefore never match (R2 修订：响应 m-N4).
+const AC_TOKEN_G = /AC\d+(?:\.\d+)?(?!\.?[A-Za-z])/g;
+const AC_TOKEN_FULL = /^(?:AC\d+(?:\.\d+)?(?!\.?[A-Za-z]))$/; // whole-token match only
+
+// Range/range-like notation inside a mapped-column cell → the WHOLE cell is
+// culled (both ends produce no T evidence —宁可少算交人工，不可多算假覆盖).
+// R3: plain hyphen counts too, so `AC1.1 - AC4.4` cannot smuggle two tokens in.
+const RANGE_CULL = /[–—~～\-－]|\.\.|…|至|到/;
+
+function linesOf(raw) {
+  return String(raw).replace(/^\ufeff/, '').split(/\r?\n/).map(l => l.replace(/\r$/, ''));
+}
+
+// Steps 1–3: locate the `## 验收标准` section (prefix match — the real heading
+// is `## 验收标准（可测）`; `### ` does not end it), harvest AC tokens, then
+// normalize granularity. Sub-numbered tokens win; a bare ACn is dropped as a
+// group cover only when its group has sub-numbers, otherwise it is 约定混提.
+// Returns {status:'ok', mode:'sub'|'flat', P:Set} | {status:'unparseable', why}.
+function extractP(raw) {
+  const lines = linesOf(raw);
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^## 验收标准/.test(lines[i])) { start = i + 1; break; }
+  }
+  if (start === -1) return { status: 'unparseable', why: 'prd.md 存在但找不到「## 验收标准」小节' };
+  const body = [];
+  for (let i = start; i < lines.length; i++) {
+    if (/^##(?!#)/.test(lines[i])) break;
+    body.push(lines[i]);
+  }
+  const tokens = body.join('\n').match(AC_TOKEN_G) || [];
+  const subs = tokens.filter(t => t.includes('.'));
+  const bares = tokens.filter(t => !t.includes('.'));
+  if (subs.length) {
+    const groups = new Set(subs.map(t => t.split('.')[0]));
+    const orphans = bares.filter(b => !groups.has(b));
+    if (orphans.length) {
+      return { status: 'unparseable', why: `prd 验收标准小节约定混提：子编号与无法归组的裸组编号（${orphans.join(', ')}）并存，不猜测不展开` };
+    }
+    return { status: 'ok', mode: 'sub', P: new Set(subs) };
+  }
+  return { status: 'ok', mode: 'flat', P: new Set(bares) };
+}
+
+// Markdown table row → cells; `\|` is an escaped literal pipe, not a boundary.
+function splitTableRow(line) {
+  const cells = [];
+  let cur = '';
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '\\' && line[i + 1] === '|') { cur += '|'; i++; continue; }
+    if (ch === '|') { cells.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  cells.push(cur);
+  return cells.map(c => c.trim());
+}
+
+const isSeparatorRow = cells =>
+  cells.length > 1 && cells.every(c => c === '' || /^:?-{2,}:?$/.test(c));
+
+// Step 4: T evidence comes ONLY from the "映射 AC" column cells of the
+// `## 测试点清单` table — the column is located by its HEADER NAME, not by
+// position; the header row and the |---| separator row are skipped; everything
+// outside the column (scene prose, examples like 例如 AC99) yields no evidence.
+// Cells are culled whole on range notation; surviving cells are split on
+// `[，,、/\s]+` and a token enters T iff it FULLY matches the AC regex and
+// carries P's granularity. Missing table/header → unparseable (allow+disclose).
+function extractT(raw, mode) {
+  const lines = linesOf(raw);
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s*测试点清单/.test(lines[i])) { start = i + 1; break; }
+  }
+  if (start === -1) return { status: 'unparseable', why: 'test-strategy.md 缺少「## 测试点清单」表' };
+  const T = new Set();
+  let col = -1;
+  for (let i = start; i < lines.length; i++) {
+    const ln = lines[i];
+    if (/^##(?!#)/.test(ln)) break;
+    const row = ln.trim();
+    if (!row.startsWith('|')) continue;
+    const cells = splitTableRow(row);
+    if (isSeparatorRow(cells)) continue;
+    if (col === -1) {
+      const idx = cells.indexOf('映射 AC');
+      if (idx !== -1) col = idx; // header row located; its own cells yield nothing
+      continue;
+    }
+    const cell = cells[col];
+    if (cell === undefined || cell === '') continue;
+    if (RANGE_CULL.test(cell)) continue;
+    for (const tok of cell.split(/[，,、/\s]+/)) {
+      if (!tok || !AC_TOKEN_FULL.test(tok)) continue;
+      if (mode === 'sub' && !tok.includes('.')) continue; // group map ≠ sub evidence
+      if (mode === 'flat' && tok.includes('.')) continue;
+      T.add(tok);
+    }
+  }
+  if (col === -1) return { status: 'unparseable', why: 'test-strategy.md 测试点清单表找不到「映射 AC」列表头' };
+  return { status: 'ok', T };
+}
+
+// The whole F4 pipeline for one phase→gate1 transition (or its brand-new
+// equivalent). Short-circuits in spec order; either denies, allows with
+// disclosure, or returns having found full coverage (caller then falls through
+// to a plain allow). Only the transition moment pays the two extra file reads.
+function f4Check(dir) {
+  // Step 0 — direction zero: both artifacts must exist and be readable (classic
+  // and express alike). Missing at the transition is protocol breach, not a
+  // parse limit; this also closes the write-state-first/restock-later ordering.
+  const readArt = p => { try { return readFileSync(p, 'utf8'); } catch { return null; } };
+  const prdText = readArt(join(dir, 'prd.md'));
+  const tsText = readArt(join(dir, 'test-strategy.md'));
+  const missing = [['prd.md', prdText], ['test-strategy.md', tsText]]
+    .filter(([, t]) => t === null).map(([name]) => name);
+  if (missing.length) {
+    deny(`AIDLC F4 机械校验：phase→gate1 转移瞬间发现验收工件缺失或不可读取（${missing.join('、')}）——这是协议违约，不是解析局限。请先补齐 prd.md 与 test-strategy.md 再推进 gate1；若 state 与工件同时损坏，运行 /aidlc:resume 对账。`);
+  }
+  const pRes = extractP(prdText);
+  if (pRes.status === 'unparseable') {
+    allowWith(`AIDLC F4 无法机械校验：${pRes.why}，交人类门与 party-review 复核。`);
+  }
+  if (pRes.P.size === 0) {
+    allowWith('AIDLC F4 无法机械校验：prd 验收标准小节内没有可识别的 AC 编号（P=∅），交人类门与 party-review 复核。');
+  }
+  const tRes = extractT(tsText, pRes.mode);
+  if (tRes.status === 'unparseable') {
+    allowWith(`AIDLC F4 无法机械校验：${tRes.why}，交人类门与 party-review 复核。`);
+  }
+  // Step 5 — judgment: P−T≠∅ (gaps) and T−P≠∅ (phantoms) are both deny; when
+  // both directions fire, one deny lists each side's numbers (never silent).
+  const gaps = [...pRes.P].filter(x => !tRes.T.has(x));
+  const phantoms = [...tRes.T].filter(x => !pRes.P.has(x));
+  if (gaps.length || phantoms.length) {
+    const parts = [];
+    if (gaps.length) parts.push(`AC 覆盖缺口（P−T≠∅）：${gaps.join(', ')} 在 prd 验收标准中存在，但 test-strategy 测试点清单「映射 AC」列没有任何映射`);
+    if (phantoms.length) parts.push(`幻影编号（T−P≠∅）：${phantoms.join(', ')} 出现在 test-strategy「映射 AC」列，但 prd 验收标准中不存在`);
+    deny(`AIDLC F4 机械校验：${parts.join('；')}。请补齐测试点或修正编号后再推进 gate1。`);
+  }
+  // Full coverage: plain allow, no disclosure.
+}
+
 // Resolve the intent this path belongs to.
 const slug = slugOfPath(fp);
 const own = slug ? loadIntent(root, slug) : null;
 
 if (slug && !own) {
   const sp = join(root, 'docs', 'aidlc', slug, 'state.json');
-  if (!existsSync(sp)) emit(null); // no state.json yet: brand-new intent, nothing to enforce
+  const intentDir = join(root, 'docs', 'aidlc', slug);
+  if (!existsSync(sp)) {
+    // Brand-new intent (no state.json on disk). Bypass-a closure: a FIRST
+    // write that already claims phase=gate1 or gate1=approved runs the same
+    // receipt check + full F4 as the normal path, so deleting state.json
+    // cannot dodge F4. Artifacts usually don't exist yet → deny; present but
+    // unparseable → allow+disclose. Plain creation (below gate1) stays silent.
+    if (!isEdit && /docs\/aidlc\/[^/]+\/state\.json$/i.test(fp)) {
+      const text = String(ti.content ?? '');
+      let next = null;
+      try { next = JSON.parse(text); } catch { next = null; }
+      if (next && (next?.phase === 'gate1' || next?.gates?.gate1 === 'approved')) {
+        checkGateReceipts(text, intentDir);
+        f4Check(intentDir);
+      }
+    }
+    emit(null); // no state.json yet: brand-new intent, nothing else to enforce
+  }
   // state.json on disk but unparseable = corrupt. Fail closed for every path
   // except repairing that state.json itself via Write (receipt-checked above).
   if (/docs\/aidlc\/[^/]+\/state\.json$/i.test(fp) && !isEdit) {
@@ -110,19 +305,39 @@ if (/docs\/aidlc\/[^/]+\/state\.json$/i.test(fp)) {
   // Rule 3 — human receipt required before state.json says approved.
   checkGateReceipts(text, dir);
 
-  // Rule 4 — optimistic lock: a full overwrite (Write) of state.json must carry
-  // forward every history entry already on disk.
+  let next = null;
+  try { next = JSON.parse(text); } catch { next = null; }
+
+  // Rule 4 — optimistic lock + preserveKeys, against the state currently on disk.
   if (existsSync(intent.statePath)) {
     let cur = null;
     try { cur = JSON.parse(readFileSync(intent.statePath, 'utf8')); } catch { cur = null; }
-    const curAts = Array.isArray(cur?.history) ? cur.history.map(h => String(h?.at ?? '')) : [];
-    if (curAts.length) {
-      let next = [];
-      try { next = JSON.parse(text).history ?? []; } catch { next = null; }
-      const nextAts = Array.isArray(next) ? new Set(next.map(h => String(h?.at ?? ''))) : new Set();
-      const lost = curAts.filter(a => a && !nextAts.has(a));
-      if (lost.length) {
-        deny(`AIDLC 乐观锁：这次对 state.json 的整体覆写丢失了 ${lost.length} 条已有 history 记录（并发修改或基于过期状态）。请重新读取磁盘上的 state.json，把 history 完整保留后再写。`);
+    if (cur) {
+      // Rule 4a — a full overwrite (Write) must carry forward every history
+      // entry already on disk (unparseable new content = everything lost).
+      const curAts = Array.isArray(cur.history) ? cur.history.map(h => String(h?.at ?? '')) : [];
+      if (curAts.length) {
+        const nextAts = Array.isArray(next?.history) ? new Set(next.history.map(h => String(h?.at ?? ''))) : new Set();
+        const lost = curAts.filter(a => a && !nextAts.has(a));
+        if (lost.length) {
+          deny(`AIDLC 乐观锁：这次对 state.json 的整体覆写丢失了 ${lost.length} 条已有 history 记录（并发修改或基于过期状态）。请重新读取磁盘上的 state.json，把 history 完整保留后再写。`);
+        }
+      }
+      // Rule 4b — preserveKeys (decision #11): an overwrite may not DROP an
+      // existing non-null key of the set; value changes always pass. The
+      // corrupt-repair path never reaches here (cur === null) — that hole is
+      // disclosed by /aidlc:resume, not silently allowed.
+      if (next) {
+        const dropped = PRESERVE_KEYS.filter(k =>
+          cur[k] !== undefined && cur[k] !== null && (next[k] === undefined || next[k] === null));
+        if (dropped.length) {
+          deny(`AIDLC 键保留校验（R4 扩展）：这次对 state.json 的整体覆写丢失了既有键 ${dropped.join(', ')}（route/testBaseline/unitStatus/tddLock/tddLockPaths 承载 F1 分级、F2 基线、单元状态与 TDD 锁——覆写丢失等于对应机制静默失效）。请重新读取磁盘上的 state.json，完整保留这些键（值允许变更）后再写。`);
+        }
+      }
+      // Rule 7 — F4 fires only at the phase→gate1 transition (an overwrite
+      // while already at gate1, or any other phase move, never re-triggers).
+      if (next && next.phase === 'gate1' && cur.phase !== 'gate1') {
+        f4Check(dir);
       }
     }
   }
