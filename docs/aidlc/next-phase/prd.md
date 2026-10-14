@@ -22,8 +22,8 @@
 - **AC1.3**（U1，负路径）：Given 同一个接入场景，When 人类在 AskUserQuestion 中拒绝 AI 提议的路线并选择另一档（或选择不进流程），Then 编排者按人类选择执行；选择不进流程时不建任何文件、直接答复需求。
 - **AC1.4**（U5，负路径）：Given 一个 v1.0 / v1.1 创建、`state.json` 不含路线字段的存量 intent，When 编排者对其执行 `/aidlc:status` 或 `/aidlc:resume`，Then 流程按既有语义续跑，不强制补写路线字段、不中断、不弹新确认；route 缺省视为 classic 等价的完整流程（具体缺省语义待开放问题 OQ1 裁决）。
 - **AC1.5**（U5，负路径）：Given `autoRouting` 为 false 或 `config.json` 缺失 / 畸形，When 用户提自然语言需求，Then 不注入路由、不弹路线确认，与现状行为完全一致。
-- **AC1.6**（U5，负路径）：Given 一个 intent 的 `state.json` 中 `route` 字段存在但取值在合法枚举 {classic, express} 之外（如 "bugfix" 或类型错误），When 编排者读取该字段决定流程形态、或 auto-route.mjs 摘要行回显 route，Then 一律按缺失处理：流程视为 `classic` 全量执行，不中断、不弹新确认；回显采用架构决策 #12 的原值透传方案：`route=<原值>(invalid→classic)`（保留脏数据可观测性，直接改写显示值会掩盖非法输入）；生效语义仍为按 classic 兜底。（R1 修订：新增 AC，响应 m2——route 非法值兜底此前在 PRD 无 AC 背书；语义来源 architecture.md 数据模型"`route`：缺失/非法值一律视为 `classic`"。）（R2 修订：响应 N2——回显语义统一到 architecture.md 决策 #12 的原值透传方案，消除与架构的互斥表述及 T06 断言二义；生效兜底语义不变。）
-- **AC1.7**（U1，负路径）：Given 一个 route=express 且 gate1 尚未批准的 intent，When 人类裁决升级路线为 classic，Then 编排者更新 state.json 的 route 字段（Write 整体覆写、history 追加留痕），裁决逐字记入 decisions.md；classic→express 的降级方向被拒绝；gate1 批准后 route 不再变更（其负向分支——降级方向被拒绝、批准后不可变更——由流程评审兜底验证，见 test-strategy T07 域）。（R1 修订：响应 M2/M7——语义来源 architecture.md 决策 #9，供 T07 映射）（R2 修订：响应 NM-7 / N14——行内补负分支验证指引，不新增 AC。）
+- **AC1.6**（U5，负路径）：Given 一个 intent 的 `state.json` 中 `route` 字段存在但取值在合法枚举 {classic, express} 之外（如 "bugfix" 或类型错误），When 编排者读取该字段决定流程形态、或 auto-route.mjs 摘要行回显 route，Then 一律按缺失处理：流程视为 `classic` 全量执行，不中断、不弹新确认；回显采用架构决策 #12 的原值透传方案：`route=<原值>(invalid→classic)`（保留脏数据可观测性，直接改写显示值会掩盖非法输入）；生效语义仍为按 classic 兜底。（R1 修订：新增 AC，响应 m2——route 非法值兜底此前在 PRD 无 AC 背书；语义来源 architecture.md 数据模型"`route`：缺失/非法值一律视为 `classic`"。（R2 修订：响应 N2——回显语义统一到 architecture.md 决策 #12 的原值透传方案，消除与架构的互斥表述及 T06 断言二义；生效兜底语义不变。））
+- **AC1.7**（U1，负路径）：Given 一个 route=express 且 gate1 尚未批准的 intent，When 人类裁决升级路线为 classic，Then 编排者更新 state.json 的 route 字段（Write 整体覆写、history 追加留痕），裁决逐字记入 decisions.md；classic→express 的降级方向被拒绝；gate1 批准后 route 不再变更（其负向分支——降级方向被拒绝、批准后不可变更——由流程评审兜底验证（负分支场景：降级方向被拒绝、gate1 批准后 route 冻结））。（R1 修订：响应 M2/M7——语义来源 architecture.md 决策 #9，供 T07 映射）（R2 修订：响应 NM-7 / N14——行内补负分支验证指引，不新增 AC。）（R3 修订：响应 m2）
 
 ### F2 测试基线（AC2.x）
 - **AC2.1**（U2）：Given gate1=approved 的 intent 进入 Construction，When 编排者执行 Sprint Planning（第 0 步），Then 在派发任何 dev 泳道之前运行既有测试命令并记录基线（总数 / pass / fail，含命令与输出摘要），基线落盘为工件并提交。
@@ -39,7 +39,7 @@
 - **AC3.4**（U5，负路径）：Given 影响面分析因环境原因整体不可用，When 执行 Sprint Planning，Then 流程降级为现状行为（无影响面列），在 plan.md 注明降级事实；不得因影响面缺失而阻断 Construction 起步。
 
 ### F4 AC↔测试点覆盖校验（AC4.x）
-- **AC4.1**（U4）：Given Inception 三工件齐且进入对齐拍，When 编排者比对 prd.md 的 AC 编号集合与 test-strategy.md 的"映射 AC"列，Then 校验为机械集合运算：每个 AC 编号至少被一条测试点映射；全部覆盖则对齐拍通过。
+- **AC4.1**（U4）：Given Inception 工件齐（classic 路线三件、express 路线两件）且进入对齐拍，When 编排者比对 prd.md 的 AC 编号集合与 test-strategy.md 的"映射 AC"列，Then 校验为机械集合运算：每个 AC 编号至少被一条测试点映射；全部覆盖则对齐拍通过。（R3 修订：响应 m-D）
 - **AC4.2**（U4）：Given 存在至少一个 AC 编号没有任何测试点映射，When 执行对齐拍校验，Then 该缺口列为 BLOCKER，不推进 phase 到 gate1；编排者将缺口清单逐字记入 `decisions.md` 并派回 qa 做引用回填（只补映射，不改 AC 语义），回填完成重跑校验直至无缺口。
 - **AC4.3**（U4，负路径）：Given test-strategy.md 的"映射 AC"列引用了 prd.md 中不存在的 AC 编号，When 执行对齐拍校验，Then 该幻影编号同样列为 BLOCKER（方向二的引用完整性），处理方式同 AC4.2。
 - **AC4.4**（U5，负路径）：Given 一个存量 intent 已处于 construction 或更后阶段（其对齐拍已按旧协议完成），When 执行 `/aidlc:resume`，Then 不强制补跑覆盖校验；该校验仅约束此后新建 / 修订的 Inception 工件。**追加场景（R1 修订：响应 m3 bounce-back 窄缝）**：Given 该存量 intent 曾在 gate1 被打回 inception（GATE-REJECTED）、且打回后插件升级（F4 校验已上线），When 编排者完成工件修订并再次推进 phase→gate1（F4 对该 intent 的首次触发），Then 校验正常触发——打回后修订的工件属"此后修订的 Inception 工件"，不得以"创建于旧版本"为由豁免；若存在缺口按 AC4.2 处理（deny、逐字记 decisions.md、派回 qa 回填）。
@@ -56,7 +56,7 @@
 - 多 intent 并行支持、`/aidlc:on` / `/aidlc:off` 交互形态变更。
 
 ## 开放问题（需人类裁决）
-- [ ] OQ1：路线字段缺省语义与 express 裁剪清单的追认——存量 intent 无 route 字段时缺省按 classic 处理是否可接受？（R1 修订：响应 M1——裁剪清单要点已作为提议默认并入 AC1.2 正文，来源 architecture.md 关键决策 #3，本 OQ 仅保留对该清单的人类追认，及 express 路线 Gate#1 的执行形态确认（含 verifier 派发默认值：high 必派/low-med 可省；retro.md 人类可选）。）（R2 修订：响应 m-N2——architecture.md 登记的 verifier 派发默认值与 retro.md 人类可选两个子项显式纳入本 OQ 枚举。）
+- [ ] OQ1：路线字段缺省语义与 express 裁剪清单的追认——存量 intent 无 route 字段时缺省按 classic 处理是否可接受？（R1 修订：响应 M1——裁剪清单要点已作为提议默认并入 AC1.2 正文，来源 architecture.md 关键决策 #3，本 OQ 仅保留对该清单的人类追认，及 express 路线 Gate#1 的执行形态确认（含 verifier 派发默认值：high 必派/low-med 可省；retro.md 人类可选）。（R2 修订：响应 m-N2——architecture.md 登记的 verifier 派发默认值与 retro.md 人类可选两个子项显式纳入本 OQ 枚举。））AC4.1 的 Given 措辞收口（"三工件齐"→"工件齐"）随本 OQ 一并追认。
 - [ ] OQ2：F2 测试基线缺失时的降级语义——（R1 修订：响应 M1）"不虚构基线、显式标注无基线对照、告警"已并入 AC2.3 正文作为提议默认；本 OQ 仅保留：缺失时是阻断进入 gate2，还是允许人类书面豁免继续（类似 tddLockOverride 的先例）？豁免留痕格式需定义。
 - [ ] OQ3：F3 影响面分级（low / med / high）的判定规则——按受影响文件数 / 消费方数阈值，还是按人类判断 + AI 建议？architect 需依据裁决制定分级标准。
 - [ ] OQ4：F4 校验的适用时机——仅 Inception 对齐拍，还是 Gate#1 复审 / scope 扩展（A2）导致 PRD 修订时也重跑？（本 PRD 默认仅 Inception 对齐拍与修订回填后重跑，扩展场景待裁决。）
