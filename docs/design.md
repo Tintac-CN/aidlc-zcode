@@ -21,6 +21,7 @@
 | D8 | 工件落 `docs/aidlc/<slug>/` + `state.json` 跨会话续跑；一工件一提交 = 审计链 | Anthropic playbook 工件链模式 |
 | D9 | 配置三层 = 插件基座 → workspace（`AGENTS.md` + `.zcode/`）→ user（`~/.zcode/`） | ZCode 原生 discovery 顺序，语义同 BMAD 三层 |
 | D10 | BMAD 钉 v6.12 模式作参照；`awslabs/aidlc-workflows` 引擎列为 v2 企业级演进 | 调研结论 |
+| D11 | **auto-route = opt-in 路由注入**：开关存项目级 `docs/aidlc/config.json`（缺失/畸形一律视为 off）；UserPromptSubmit hook 只**注入路由契约**、不做分类、不写文件——判定、确认表单与 config 写入全部由模型执行；开关短语由 hook 确定性正则预筛（短输入 ≤80 字符），误匹配由模型侧二次判定兜底；**开关只控路由注入，守卫 hook 不读开关** | 升级零行为变化（升级安全）；hook 误判不可逆所以只注入；路由（便利层）与守卫（约束层）职责分离 |
 
 ---
 
@@ -234,6 +235,10 @@ plugins/
       { "hooks": [ { "type": "process", "command": "node",
           "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-context.mjs"], "timeoutMs": 5000 } ] }
     ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "process", "command": "node",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/auto-route.mjs"], "timeoutMs": 5000 } ] }
+    ],
     "PreToolUse": [
       { "matcher": "Edit|Write", "hooks": [ { "type": "process", "command": "node",
           "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-paths.mjs"], "timeoutMs": 5000 } ] }
@@ -249,6 +254,12 @@ plugins/
   }
 }
 ```
+
+**auto-route（UserPromptSubmit，v1.1 新增，D11）**
+
+- `auto-route.mjs`：`docs/aidlc/config.json` 的 `autoRouting:true` 时注入路由契约（活跃 intent 摘要 + 五步判定：开关短语→状态提问→A1 接入确认→A2 超范围三选→门禁永不自动）；off（含 config 缺失/畸形）= 静默零注入。开关短语（`aidlc on/off`、`开启/关闭 aidlc|自动路由`，≤80 字符，词边界防 "aidlc onboarding" 误判）**在任何状态下都识别**——否则 off 态只能靠 `/aidlc:on` 上车；识别后仍由模型二次确认是切换还是提问。hook 只注入，**从不写文件、从不改状态**。
+- `session-context.mjs`（v1.1 增强）：项目曾 toggled 过开关（config.json 存在）时追加一行 `Auto-route: ON/OFF`；auto-route 开启但无活跃 intent 时也注入一行模式提示（v1.0 对此完全静默）。
+- 回归：`scripts/tests/auto-route.test.mjs`（23 场景：OFF 三态静默、开关短语中英文/边界、路由契约携带 intent 上下文、输出 schema 严格性、无 prompt 字段容错）。
 
 **守卫规则（按 POC 结论定稿）**
 
@@ -356,6 +367,13 @@ docs/aidlc/<slug>/
 {"hookSpecificOutput":{"hookEventName":"SessionStart",
  "additionalContext":"AIDLC-POC: session context injected via SessionStart hook."}}
 ```
+
+**UserPromptSubmit 注入输出（v1.1，脚本级回归验证 schema；客户端 stdin 字段名未实测，`prompt`/`userPrompt`/`user_prompt`/`message` 容错读取，缺字段时仅跳过开关短语识别、照常注入路由契约）**：
+```json
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit",
+ "additionalContext":"[AIDLC auto-route: ON] …路由契约…"}}
+```
+客户端真实 stdin 样本待首次 smoke 后回填于此。
 
 ## 附录 B：与参考资料对应
 

@@ -37,8 +37,9 @@ for f in plugins/aidlc/agents/*.md; do
 done
 [[ $fail -eq 0 ]] || exit 1
 
-echo "== 2. guard regression suite =="
+echo "== 2. guard regression suites =="
 node scripts/tests/guard-gates.test.mjs
+node scripts/tests/auto-route.test.mjs
 
 echo "== 3. manifest =="
 run plugins validate plugins/aidlc

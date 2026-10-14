@@ -18,6 +18,7 @@
 ```
 
 - 工件落 `docs/aidlc/<slug>/`，一工件一提交 = 审计链；`state.json` 支持跨会话续跑。
+- **自动路由模式（v1.1，默认关闭）**：`/aidlc:on`（或对开启状态说 "aidlc on"）后，自然语言提需求即可进入流程——接入前先展示「意图 + 拆分预览」让人确认；生命周期中疑似超范围的输入会三选确认（扩展 / 搁置 backlog / 越轨留痕）；经此入口进入的 intent，单元拆分（plan.md/units）开发前还需人工确认一次。开关存项目级 `docs/aidlc/config.json`（进 git、跨会话）；**开关只控制路由注入，守卫不受影响**。
 - 十个角色子代理：六个生产角色 `pm` / `architect` / `dev` / `qa` / `tea` / `verifier` + 四个**只读互审角色** `reviewer-pm` / `reviewer-architect` / `reviewer-qa` / `reviewer-dev`（无 Edit/Write 工具，互审只读是机制保证不靠提示词）。
 - Hooks 守卫：`.env`/密钥路径写拦截（deny）、Gate#1 前禁写 Construction 工件（deny）、TDD 锁（deny，可按 `tddLockPaths` 限定范围）、门控回执校验（`GATE-APPROVED`/`GATE-REJECTED` 轮次语义）、state.json/decisions.md 只追加+乐观锁+禁 Edit、损坏 state.json fail-closed、Stop 审计日志、SessionStart 状态预热注入。
   **定位声明**：hooks 是流程约束（防手滑/强制仪式），不是安全边界；强边界请放 CI/分支保护层。
@@ -46,6 +47,8 @@ zcode plugins install aidlc@aidlc-zcode
 /aidlc:resume
 ```
 
+自动路由（可选，默认关）：`/aidlc:on` 开启后直接说"给内部工具加一个导出 CSV 的功能"即可，无需敲命令；`aidlc off` 或 `/aidlc:off` 关回显式命令模式。
+
 ## 开发
 
 - 插件源码：[plugins/aidlc/](plugins/aidlc/)
@@ -58,6 +61,8 @@ zcode plugins install aidlc@aidlc-zcode
 - 发布到 GitHub：`scripts/publish-github.sh`（需 `gh auth login` 一次）。
 
 ## 状态
+
+v1.1.0 —— **自动路由模式**。`/aidlc:on|off` 或自然语言 "aidlc on/off" 切换（默认关，升级零行为变化）；开启后自然语言直接进流程，附三重人工确认：意图接入确认、超范围输入三选、单元拆分确认（仅自动路由入口）；门禁与全部守卫不受开关影响。新增 UserPromptSubmit hook（`auto-route.mjs`），回归 23 场景（`scripts/tests/auto-route.test.mjs`）。
 
 v1.0.0 —— **正式版**。v0.3.0 全部新机制经真实会话 smoke 验证：4 个 reviewer 角色并行互审（抓出预埋缺陷）、GATE-REJECTED 打回→修订→新回执重审全链路、decisions.md 纯 Write 追加链（零 Edit）、`/aidlc:archive` 终止归档；TDD 锁范围改并集累积；回归 28 场景。
 

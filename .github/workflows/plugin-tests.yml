@@ -25,5 +25,7 @@ jobs:
             node --check "$f" && echo "ok  $f" || { echo "FAIL $f"; fail=1; }
           done
           exit $fail
-      - name: Guard regression suite
-        run: node scripts/tests/guard-gates.test.mjs
+      - name: Guard regression suites
+        run: |
+          node scripts/tests/guard-gates.test.mjs
+          node scripts/tests/auto-route.test.mjs

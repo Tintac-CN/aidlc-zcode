@@ -60,6 +60,18 @@ export function loadIntent(root, slug) {
   } catch { return null; }
 }
 
+// Project-level auto-route switch: docs/aidlc/config.json. Missing, malformed
+// or wrong-typed always means OFF — the opt-in default. Guard hooks never read
+// this file: routing can be turned off, guards cannot.
+export function readAutoConfig(root) {
+  const p = join(root, 'docs', 'aidlc', 'config.json');
+  try {
+    if (!existsSync(p)) return { on: false, exists: false };
+    const cfg = JSON.parse(readFileSync(p, 'utf8'));
+    return { on: cfg?.autoRouting === true, exists: true };
+  } catch { return { on: false, exists: true }; }
+}
+
 // Which intent does a docs/aidlc/<slug>/... path belong to? Case-insensitive:
 // on Windows the filesystem is case-insensitive, so Docs/AIDLC/x/plan.md is
 // the same file as docs/aidlc/x/plan.md and must not slip past the guards.

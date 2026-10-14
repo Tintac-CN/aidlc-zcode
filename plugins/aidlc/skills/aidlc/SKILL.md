@@ -1,6 +1,6 @@
 ---
 name: aidlc
-description: AI-DLC workflow orchestrator. Use when the user wants to start, resume, gate, or check an AI-DLC lifecycle (inception / construction / operations phases with review gates), or invokes /aidlc commands. Manages intents under docs/aidlc/<slug>/ with state.json, artifact chain, and human approval gates.
+description: AI-DLC workflow orchestrator. Use when the user wants to start, resume, gate, or check an AI-DLC lifecycle (inception / construction / operations phases with review gates), invokes /aidlc commands, toggles AIDLC auto-route on/off (natural-language requests entering the lifecycle automatically), or asks about AIDLC status/config. Manages intents under docs/aidlc/<slug>/ with state.json, artifact chain, and human approval gates.
 ---
 
 # AIDLC 编排（主 skill）
@@ -54,9 +54,19 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 - **decisions.md 只追加**，且**只允许 Write**（Edit 被 guard-gates deny——old_string 可命中任意位置）：先读当前全文，再 Write"全文 + 追加内容"（守卫校验前缀原样保留）。
 - **tddLockPaths（TDD 锁范围）**：锁定时记录的测试文件路径清单（相对或绝对均可，守卫按后缀匹配、大小写不敏感）。每次置锁与既有清单**取并集**（多 unit 多次置锁范围只增不减，重跑不顶掉先前保护）。**非空时只锁清单内路径**——本 intent 的契约集，不殃及仓库其他测试；缺失/为空 = 全仓库测试文件（旧 intent 兼容行为）。
 - **活跃 intent**：`docs/aidlc/*/state.json` 中 `updatedAt` 最新且 `phase ∉ {done, archived}` 者（hook 同此语义）。终止的 intent 用 `/aidlc:archive` 置 `archived`，不再被注入/续跑。
+- **auto-route 开关**：项目级 `docs/aidlc/config.json`（`{"autoRouting": <bool>, "updatedAt": "<ISO-8601>"}`）。缺失/畸形一律视为关闭（fail-safe 到 opt-in 默认）；**只控制路由注入，守卫 hook 不读它**——路由可关，保护不可关。
 - **unitStatus（Construction 进度）**：`"unitStatus": { "U1": "done", "U2": "pending", ... }`——**每完成一个 unit 立即更新并提交**（per-unit checkpoint）；resume 时按此跳过已完成 unit，只续跑 pending。
 
 ## 3. 阶段协议
+
+### Auto-Route 接入协议（自然语言入口，opt-in）
+
+`docs/aidlc/config.json` 的 `"autoRouting": true` 时（`/aidlc:on`｜`/aidlc:off` 切换，或对开启状态说 "aidlc on/off"），用户无需敲命令，直接用自然语言提出需求即可进入流程。**开关只控制路由注入，不影响任何守卫**——guard-gates / guard-paths / TDD 锁在开关两种状态下都强制生效。UserPromptSubmit hook（auto-route.mjs）在开启时注入路由契约；hook 只注入不分类，判定由编排者按本节执行；**显式 `/aidlc:` 命令永远优先于路由判定**。
+
+- **A1 意图接入确认**（无活跃 intent + 开发类需求）：**先不建任何目录**。展示「识别的意图一句话 + 3~6 条粗粒度拆分预览」，AskUserQuestion 三选：**进入生命周期 / 调整拆分后再进 / 不进流程直接答复**。人类确认进入后，把用户裁决与（调整后的）拆分预览**逐字**记入 `decisions.md`，再按下方 Inception 协议建 intent——该记录同时是 A3 的触发凭据。用户拒绝进入 → 直接答复需求，不留任何文件。
+- **A2 范围扩展确认**（有活跃 intent + 输入疑似超范围）：AskUserQuestion 三选——**扩展当前 intent**（裁决逐字进 decisions.md；construction 阶段则在 plan.md 追加 unit + 刷新受影响角色的工件 + 必要时重新置 TDD 锁）/ **搁置**（追加进 `docs/aidlc/backlog.md`：一行一条 `| 日期 | 一句话需求 | 状态 |`，不建 intent、不展开）/ **越轨直改**（不经流程直接改，但 decisions.md 追加 OOB 条目：需求原话 + 改动范围 + 测试债务说明）。**判定不了一律按超范围走确认**，不得自作主张。
+- **A3 拆分确认**（仅适用于经 A1 接入的 intent，凭据 = decisions.md 的 A1 记录）：Sprint Planning 提交 `plan.md` + `units/` 后、**派发 dev 泳道之前**，渲染单元表请人类确认（批准并开始 / 调整单元 / 打回重规划），裁决逐字进 `decisions.md`，末行回执 `PLAN-CONFIRMED <日期>`。**手动 `/aidlc:construct` 不加此步**（敲命令即视为已确认要拆分）。
+- **门禁永不自动**：gate1/gate2 的人类审批在任何模式下都不可跳过、不可代答。
 
 ### Inception（`/aidlc:inception <意图>`）
 
@@ -115,7 +125,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 
 ## 6. 状态查询命令速查
 
-`/aidlc:status`｜`/aidlc:resume`｜`/aidlc:gate [gate1|gate2]`｜`/aidlc:lock-tests`｜`/aidlc:unlock-tests <理由>`｜`/aidlc:construct`｜`/aidlc:ops`｜`/aidlc:archive <理由>`（终止 intent，见 §3 Gate#1 打回升级与 §9）
+`/aidlc:status`｜`/aidlc:resume`｜`/aidlc:gate [gate1|gate2]`｜`/aidlc:lock-tests`｜`/aidlc:unlock-tests <理由>`｜`/aidlc:construct`｜`/aidlc:ops`｜`/aidlc:archive <理由>`（终止 intent，见 §3 Gate#1 打回升级与 §9）｜`/aidlc:on`｜`/aidlc:off`（auto-route 开关，见 §3.0；自然语言 "aidlc on/off" 等效）
 
 ## 7. 工件模板（内联，扇出时随调度消息发给角色）
 

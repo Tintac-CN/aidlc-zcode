@@ -97,10 +97,10 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 
 <header><div class="wrap">
   <h1>AI 高速产出，<span class="grad">人类全程把关</span></h1>
-  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、十个角色子代理、工件链审计与机制化守卫。装上即用，斜杠命令驱动。</p>
+  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、十个角色子代理、工件链审计与机制化守卫。斜杠命令驱动；v1.1 起支持<b>自动路由</b>——开启后自然语言直接进流程，疑问处必经人工确认。</p>
   <div class="badges">
-    <span class="badge">版本 <b>v1.0.0</b></span><span class="badge">License <b>MIT</b></span>
-    <span class="badge">10 命令 · 10 角色 · 5 守卫 hooks</span><span class="badge">全生命周期实战验证</span>
+    <span class="badge">版本 <b>v1.1.0</b></span><span class="badge">License <b>MIT</b></span>
+    <span class="badge">12 命令 · 10 角色 · 6 hooks（5 守卫 + 1 路由）</span><span class="badge">全生命周期实战验证</span>
   </div>
   <div class="cta">
     <a class="btn primary" href="#install">安装插件</a>
@@ -147,7 +147,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <p class="sub">全部机制经过真实项目端到端验证（含配额熔断降级、并发写、对抗绕过等压力场景）。</p>
   <div class="grid">
     <div class="card"><h4><span class="ic">🎭</span>十个角色子代理</h4><p>六个生产角色（pm / architect / dev / qa / tea / verifier，约束前置）+ 四个<b>只读互审角色</b>（reviewer-pm / -architect / -qa / -dev，<b>无 Edit/Write 工具</b>——互审只读是机制保证，不靠提示词）。</p></div>
-    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改锁定测试会被拦；门控置 approved 必须有人类回执且<b>打回后旧回执作废</b>；审计文件禁 Edit（防篡改历史）；损坏 state.json 时 fail-closed；<code>.env</code>/密钥路径写入被拒。</p></div>
+    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个守卫 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改锁定测试会被拦；门控置 approved 必须有人类回执且<b>打回后旧回执作废</b>；审计文件禁 Edit（防篡改历史）；损坏 state.json 时 fail-closed；<code>.env</code>/密钥路径写入被拒。</p></div>
+    <div class="card"><h4><span class="ic">🧭</span>自动路由（v1.1 新增）</h4><p><code>/aidlc:on</code> 后自然语言直接进流程，不必敲命令——接入前先给「意图 + 拆分预览」让你确认，超范围输入三选，单元拆分开发前再确认一次；<b>门禁与守卫不受开关影响</b>（默认关，见 <a href="#faq">FAQ</a>）。</p></div>
     <div class="card"><h4><span class="ic">📜</span>工件链审计</h4><p>PRD、架构、测试策略、计划、评审、决策、复盘全部落 <code>docs/aidlc/&lt;意图&gt;/</code>，一工件一提交；人类反馈<b>逐字</b>进 decisions.md。</p></div>
     <div class="card"><h4><span class="ic">🔁</span>断点续跑</h4><p><code>state.json</code> 记录阶段机与单元进度；中断后 <code>/aidlc:resume</code> 自动四方对账（state/磁盘/git/决策），按 unit 粒度恢复，不重跑已完成的。</p></div>
     <div class="card"><h4><span class="ic">🔍</span>新鲜上下文终检</h4><p>Gate#2 派独立 verifier：自己跑测试、双查计划外文件、抽查验收、核实前轮评审声称——实战中真的抓到过编排者的盲区。</p></div>
@@ -181,7 +182,7 @@ zcode plugins install aidlc@aidlc-zcode</code></pre>
   <pre><code>zcode plugins list | grep -A2 aidlc
 # 期望输出：skills: 2, commands: 10, hooks: 5
 
-zcode commands list        # 应看到 10 个 /aidlc:* 命令
+zcode commands list        # 应看到 12 个 /aidlc:* 命令
 zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <p>hooks <b>自动启用</b>，无需任何配置。输入框打 <kbd>/</kbd> 能看到 <code>/aidlc:inception</code> 等命令即装好了。</p>
 
@@ -189,12 +190,12 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <p>仓库更新后（比如 0.2.0 → 1.0.0），本地安装<b>不会自动跟随</b>，需要手动升级：</p>
   <pre><code># 1. 升级到 marketplace 里的最新版本
 zcode plugins update aidlc@aidlc-zcode
-# 成功输出形如：Updated plugin aidlc@aidlc-zcode from 0.2.0 to 1.0.0. Restart zcode to apply.
+# 成功输出形如：Updated plugin aidlc@aidlc-zcode from 1.0.0 to 1.1.0. Restart zcode to apply.
 
 # 2. 必须重启 ZCode——旧会话仍挂着上一版的 hooks
 # 3. 验证版本（看缓存路径里的版本号）
 zcode plugins list | grep "cache/aidlc-zcode"
-# 期望：cache/aidlc-zcode: ...\aidlc\1.0.0</code></pre>
+# 期望：cache/aidlc-zcode: ...\aidlc\1.1.0</code></pre>
   <div class="note warn"><b>⚠️ 升级后不重启 = 旧守卫还在岗</b>
   <p>命令、agent、hooks 都在<b>会话启动时</b>注册。升级后不重启的 ZCode 里跑的还是旧版守卫（例如 1.0.0 新增的「审计文件禁 Edit」「打回后旧回执作废」不会生效，但界面上看起来一切正常）——这是最容易踩的坑。</p></div>
   <p>两点说明：</p>
@@ -222,6 +223,11 @@ zcode plugins list | grep "cache/aidlc-zcode"
     <h4>过第一道门</h4>
 <pre><code>/aidlc:gate</code></pre>
     <p>AI 交叉评审三份工件（抓硬性不一致），然后<b>停下来等你</b>：表单化审批（通过 / 打回+反馈）。你的反馈逐字进 <code>decisions.md</code>。</p>
+  </div></div>
+  <div class="step"><div class="n">✚</div><div class="body">
+    <h4>可选：自动路由——连命令都懒得敲</h4>
+<pre><code>/aidlc:on</code></pre>
+    <p>之后直接说「给这个工具加一个导出CSV的功能」即可：先给你看意图识别和拆分预览，你确认后才进流程。开关存在项目里（<code>docs/aidlc/config.json</code>，默认关），<code>aidlc off</code> 随时关回。</p>
   </div></div>
 </div></section>
 
@@ -294,10 +300,11 @@ zcode plugins list | grep "cache/aidlc-zcode"
     <tr><td><code>/aidlc:ops</code></td><td>运维手册 + 参数收集 + 复盘完结</td><td>前置：gate2 approved</td></tr>
     <tr><td><code>/aidlc:status</code></td><td>查阶段/门控/工件清单/下一步</td><td>含 git 提交状态对账</td></tr>
     <tr><td><code>/aidlc:resume [slug]</code></td><td>断点续跑（四方对账 + unit 粒度恢复）</td><td>SessionStart 自动预热</td></tr>
+    <tr><td><code>/aidlc:on</code> ｜ <code>/aidlc:off</code></td><td>自动路由开关（v1.1，默认关；开启后说 "aidlc on/off" 也行）</td><td>开关只控路由注入，守卫不受影响</td></tr>
     <tr><td><code>/aidlc:lock-tests</code></td><td>TDD 锁置位（校验测试已提交）</td><td>此后改测试被 deny</td></tr>
     <tr><td><code>/aidlc:unlock-tests &lt;理由&gt;</code></td><td>经人类批准解锁（理由逐字留痕）</td><td>修完契约重新上锁</td></tr>
     <tr><td><code>/aidlc:archive &lt;理由&gt;</code></td><td>终止 intent（archived，历史保留作审计）</td><td>打回 3 轮不收敛 / 需求取消时</td></tr>
-    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 28 场景）</td><td>改插件配置后必跑；CI 也会自动跑</td></tr>
+    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 28 场景 + 自动路由 23 场景）</td><td>改插件配置后必跑；CI 也会自动跑</td></tr>
   </table>
 </div></section>
 
@@ -314,11 +321,14 @@ zcode plugins list | grep "cache/aidlc-zcode"
 ├── reviews/            # 各门 AI 互审与 verifier 报告
 ├── decisions.md        # 人类决策台账（只追加；门控回执在此校验）
 ├── audit.log           # Stop hook 逐轮审计
-└── ops-runbook.md  retro.md                      # Operations 产出</code></pre>
+└── ops-runbook.md  retro.md                      # Operations 产出
 
-  <h3>五个守卫 hooks（插件自带，自动启用）</h3>
+docs/aidlc/config.json  # 自动路由开关（v1.1，默认 off；不随 intent 走，项目级）</code></pre>
+
+  <h3>六个 hooks（五守卫 + 一路由，插件自带自动启用）</h3>
   <table>
     <tr><th>Hook</th><th>事件</th><th>强制内容</th></tr>
+    <tr><td><code>auto-route</code>（v1.1）</td><td>UserPromptSubmit</td><td>自动路由开启时注入路由契约（意图接入确认 / 超范围三选 / 拆分确认 / 门禁永不自动）；关闭时零注入。只注入上下文，从不写文件、不拦操作；开关短语由 hook 确定性识别、模型二次确认</td></tr>
     <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改锁定测试（tddLockPaths 限定范围）；门控置 approved 须有人类回执（打回后旧回执作废）；state.json/decisions.md 禁 Edit、只追加、乐观锁；损坏 state.json fail-closed</td></tr>
     <tr><td><code>guard-paths</code></td><td>PreToolUse</td><td><code>.env</code>/密钥/凭据文件写入 deny（<code>.env.example</code> 白名单）</td></tr>
     <tr><td><code>guard-tests</code></td><td>PostToolUse</td><td>TDD 锁期间测试文件被改 → 警告注入（提示走解锁流程）</td></tr>
@@ -338,6 +348,8 @@ zcode plugins list | grep "cache/aidlc-zcode"
 <!-- ============ FAQ ============ -->
 <section id="faq"><div class="wrap">
   <h2><span class="num">08</span>FAQ</h2>
+  <h3>自动路由是什么？为什么默认关？</h3>
+  <p>默认你得敲 <code>/aidlc:inception</code> 等命令；<code>/aidlc:on</code> 之后直接用自然语言提需求即可——接入前会先给你看「识别的意图 + 粗粒度拆分预览」让你确认，流程中冒出超范围的新需求会三选（扩展当前 intent / 搁置 backlog / 越轨直改留痕），经此入口进入的 intent 在开发前还要你确认一次单元拆分。默认关是为了升级零行为变化：不想用自动路由的用户装完 v1.1 和 v1.0 手感完全一致。关闭（<code>/aidlc:off</code>）只是不再自动路由，<b>守卫与已存在的 intent 原样保留</b>。</p>
   <h3>装好了但看不到命令？/ 怎么升级版本？</h3>
   <p>先重启 ZCode——命令/agent/hooks 都在启动时注册。升级用 <code>zcode plugins update aidlc@aidlc-zcode</code>（源仓库须已 bump 版本），升级后同样要重启，否则旧守卫还在岗。完整步骤与验证见 <a href="#install">§03 安装 → 升级版本</a>。</p>
   <h3>能在 headless / CI 里跑吗？</h3>
@@ -354,7 +366,7 @@ zcode plugins list | grep "cache/aidlc-zcode"
   <div>
     <b>资源</b><br>
     <a href="https://github.com/Tintac-CN/aidlc-zcode">GitHub 仓库</a><br>
-    <a href="https://github.com/Tintac-CN/aidlc-zcode/blob/main/docs/design.md">设计定稿 v1.0</a><br>
+    <a href="https://github.com/Tintac-CN/aidlc-zcode/blob/main/docs/design.md">设计定稿（D1–D11）</a><br>
     <a href="https://github.com/Tintac-CN/aidlc-zcode/blob/main/docs/audit-report.md">审核报告</a>
   </div>
   <div>
@@ -366,7 +378,7 @@ zcode plugins list | grep "cache/aidlc-zcode"
   <div>
     <b>许可</b><br>
     MIT License<br>
-    AIDLC-ZCode v1.0.0<br>
+    AIDLC-ZCode v1.1.0<br>
     本页由 GitHub Pages 提供
   </div>
 </div></div></footer>
