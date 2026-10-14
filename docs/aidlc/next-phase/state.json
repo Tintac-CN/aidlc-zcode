@@ -17,8 +17,8 @@
     "unavailable": false,
     "coverage": null
   },
-  "unitStatus": { "U1": "pending", "U2": "pending", "U3": "pending", "U4": "pending", "U5": "pending" },
-  "updatedAt": "2026-10-14T17:05:00Z",
+  "unitStatus": { "U1": "done", "U2": "pending", "U3": "pending", "U4": "pending", "U5": "pending" },
+  "updatedAt": "2026-10-14T17:06:21Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
     { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
@@ -29,6 +29,7 @@
     { "at": "2026-10-14T19:15:00Z", "from": "gate1", "to": "inception", "why": "human rejected at 3rd review (GATE-REJECTED gate1 2026-10-14 in decisions.md): 1 BLOCKER (punctuation-level mapping-column cleanup) + 2 MAJOR (one-line) + 14 MINOR per reviews/gate1-ai-r3.md; revision round 3 (final before protocol escalation), sweep-level scope only" },
     { "at": "2026-10-14T20:05:00Z", "from": "inception", "to": "gate1", "why": "R3 sweep complete: mapping column purified to tokens only (BLOCKER closed, F4 simulation P=21/T=21 bidirectionally closed), hyphen in exclusion char class, retro touchpoints 9-11, AC2.4 alignment row, minor details; gate1 reset pending for fourth review — per SKILL protocol, if this review fails, escalate to human (continue revising or /aidlc:archive)" },
     { "at": "2026-10-14T16:53:18Z", "from": "gate1", "to": "construction", "why": "human approved at 4th review (GATE-APPROVED gate1 2026-10-15 in decisions.md): zero BLOCKER (0B/2M/5m); approved with conditions — M-R4-1/M-R4-2 as first Construction action, 5 MINORS alongside; ratification package ①-④ effective" },
-    { "at": "2026-10-14T17:05:00Z", "from": "none", "to": "construction/baseline", "why": "F2 step-0 test baseline recorded per plan.md declaration (2 suites, 51/51 pass, cross-checked tail lines, unavailable=false); Sprint Planning complete (plan.md + units U1-U5); unitStatus initialized" }
+    { "at": "2026-10-14T17:05:00Z", "from": "none", "to": "construction/baseline", "why": "F2 step-0 test baseline recorded per plan.md declaration (2 suites, 51/51 pass, cross-checked tail lines, unavailable=false); Sprint Planning complete (plan.md + units U1-U5); unitStatus initialized" },
+    { "at": "2026-10-14T17:06:21Z", "from": "U1", "to": "U1=done", "why": "approval conditions landed inline (orchestrator-owned per decisions.md): architecture.md scenario 17 + whole-token full-match semantics + m-e rewrite + count chain 16→17 + route-profile two-line declaration; test-strategy T40 count/L68 registration/T54 grammar/T53-T56 line numbers; prd header R3 record (m-R4-5)" }
   ]
 }
