@@ -78,3 +78,13 @@ GATE-REJECTED gate1 2026-10-14
 结论：gate1 = approved，phase = construction。修订轮次 R1/R2/R3 共 3 轮，第 4 轮评审零 BLOCKER 后批准。
 
 GATE-APPROVED gate1 2026-10-15
+
+## 2026-10-14 Construction：TDD 置锁与 pk5 夹具缺陷待裁决（文字记录，无人类裁决）
+
+按 /aidlc:construct 执行：F2 第 0 步基线记录（51/51，见 state.json.testBaseline）、Sprint Planning（plan.md + units U1-U5）、U1 附带条件内联落地（编排者认领项）、TDD 红灯（dev 提交失败测试 b39fdbc：ac-coverage 32/49 红、route-profile 10/15 红、存量 28+23 未动）、置锁（tddLock=true，tddLockPaths=[ac-coverage, route-profile]）。
+
+**pk5 夹具缺陷（dev 按 TDD 纪律上报，编排者复核证据成立，待人类裁决解锁）**：
+- 现象：ac-coverage.test.mjs 48/49 绿，唯一红 pk5。pk5 盘上状态误展开 `...PKBASE`（含 route/testBaseline/unitStatus 三键，与 pk1 盘上状态仅 slug 不同），其新内容缺这三键 → 按已批准架构决策 #11（preserveKeys 键保留）必须 deny，测试却期望 allow；pk1 同构造期望 deny。node 字节级复算：disk-pk1 ≡ disk-pk5（仅 slug），new-pk1 与 new-pk5 唯一差异为不在保留集合的 tddLockOverride。确定性实现无法同时满足两者——夹具编写笔误，非实现缺陷。
+- 编排者复核：属实。实现其余全部达标：ac-coverage 48/49、route-profile 15/15、guard-gates 28/28、auto-route 23/23、本 intent 工件 dogfood（phase→gate1 转移）plain allow（P=21/T=21）。U4 文档触点 1-11 已并行落地并提交（40f17f7）。
+- 待人类裁决：① 解锁批准（/aidlc:unlock-tests 语义，理由如上）；② 修复方案 A（pk5 新内容补全五保留键、仅去 tddLockOverride——场景变为"丢 tddLockOverride 不拦"，与 pk1 形成边界对照，编排者推荐）或 B（pk5 盘上改 legacy 状态）。解锁→修夹具→49/49→重新上锁→补提交 U2。
+- 保守路径（人类未裁决期间）：U2 实现已提交但标记 blocked(pk5-unlock)，unitStatus 如实记录；U3/U5 等不受阻工作继续；gate2 前必须回此决策。
