@@ -11,3 +11,22 @@
 3. **分级交互**：AI 提议 + 人确认——接入时 AI 按输入判定规模并提议路线，AskUserQuestion 确认后生效，与 auto-route A1 确认合并为一步
 
 若 Gate#1 人审裁决不同，按打回流程修订，以上默认值作废。
+
+## 2026-10-14 Gate#1 审批
+
+人类裁决（AskUserQuestion 选项原文）：**"打回修订（推荐）"**。
+
+依据：reviews/gate1-ai.md（2026-10-14）互审结论 **3 BLOCKER / 7 MAJOR / 18 MINOR**：
+- **B1** F4 提取规则 `/\bAC\d+\b/g` 折叠子编号（"AC1.1"→"AC1"）致校验恒通过、名存实亡（qa+architect 独立实测复现×2）
+- **B2** PRD 非目标"为任何新机制引入 fail-open 路径（F1–F4 均不得触碰）"与架构 F4 决策 #5 的披露式 fail-open 分支直接矛盾
+- **B3** F2/F3 的 P0"单元"测试点伪化——架构落层为纯 prompt 层无被测单元，测试策略却按 .mjs 单元层断言
+其余 MAJOR/MINOR 全文见 reviews/gate1-ai.md（M1-M7、m1-m18）。
+
+修订指令（只重跑被点名角色，其余工件不动）：
+- **pm**：B2 的 PRD 措辞修订（建议方向：红线精确化为"未经披露的 fail-open / 主路径不得 fail-open"，与 intent.md 原文"新 hook 不得 fail-open 静默失效"对齐，把 F4 已披露分支显式豁免——此建议须复审追认）；M1 使 AC1.2/AC2.3 可测化（裁剪清单与降级语义的编排者默认方案并入 AC 正文，OQ 保留人类追认）；M3 补 OQ（基线命令失败语义、性能预算、flaky 口径）；M7 补两档决策记录与 OQ；相关 MINOR（m2/m3/m5/m6）随修订处理。
+- **architect**：B1 补全 F4 提取规格（子编号+扁平双粒度归一、范围词与分隔符单元格排除、小节标题"（AC1.x）"幻影排除、标题按 `^## 验收标准` 前缀匹配、AC4.3 方向二 T−P 的机械处理、先写 state 的顺序绕过与两条早退路径的封堵或披露）；M4 补全 express 触点（gate.md 真值表、party-review SKILL、dev.md、status.md、session-context 回显与非法值回显语义）；M5/M6 规格化（缺失 vs 不可解析的区分、R4 扩展或明示 prompt 纪律+resume 对账）；M7 钉死基线验证命令与计数解析口径。
+- **qa**：B3 按裁决后落层重定测试层级与 P0（建议方向：F2/F3 诚实降级为 E2E/流程评审，机械断言只保留真正确定性的部分）；M2 修正映射语义错位（T03/T51/T05/T06/T07）。
+
+产出后 party-review 复审重点核对 B1/B2/B3 消解。
+
+GATE-REJECTED gate1 2026-10-14
