@@ -1,14 +1,15 @@
 {
   "slug": "next-phase",
   "intent": "根据调研结果，开始推进插件到下一个阶段",
-  "phase": "gate1",
-  "gates": { "gate1": "pending", "gate2": "pending" },
+  "phase": "inception",
+  "gates": { "gate1": "rejected", "gate2": "pending" },
   "tddLock": false,
   "tddLockPaths": [],
   "tddLockOverride": null,
-  "updatedAt": "2026-10-14T14:00:37Z",
+  "updatedAt": "2026-10-14T15:10:00Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
-    { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" }
+    { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
+    { "at": "2026-10-14T15:10:00Z", "from": "gate1", "to": "inception", "why": "human rejected at gate1 (GATE-REJECTED gate1 2026-10-14 in decisions.md): 3 BLOCKER / 7 MAJOR / 18 MINOR per reviews/gate1-ai.md; revision round 1, named roles pm/architect/qa only" }
   ]
 }
