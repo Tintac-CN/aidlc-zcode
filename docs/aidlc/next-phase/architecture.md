@@ -3,6 +3,7 @@
 > 产出者：architect　日期：2026-10-14　来源：intent.md + prd.md
 > 修订：R1（2026-10-14，Gate#1 打回修订轮，响应 reviews/gate1-ai.md B1/B3/M4/M5/M6/M7/m8/m9/m10/m11；修订处以"（R1 修订：响应 …）"行内标注）
 > 修订：R2（2026-10-14，Gate#1 复审打回极小修订轮，逐条响应 reviews/gate1-ai-r2.md：N1/N3/N4/N6/N7/N8/N9/N10/N13/m-N4 及 pm NM-5/NM-6 配套；修订处以"（R2 修订：响应 …）"行内标注）
+> 修订：R3（2026-10-14，Gate#1 打回第 3 轮清扫修订（协议最后一轮），逐条响应 reviews/gate1-ai-r3.md：M-R3-1/M-R3-2 及 m-Q2/m-a/m-c/m-d/m-e/m-f/m6/m-D 配合；修订处以"（R3 修订：响应 …）"行内标注。m6 核查：R2 头部响应清单已含 m-N4（N1/N3/N4/N6/N7/N8/N9/N10/N13/m-N4），无需补列）
 
 ## 逻辑架构
 
@@ -48,7 +49,7 @@
 
 **express 触点清单（prompt 层，全部按 `state.json.route` 分支；R1 修订：响应 M4）**——route 缺失或非法值一律按 classic 取集合：
 
-1. `plugins/aidlc/commands/aidlc/gate.md` 门推断真值表第 3 条：`phase = inception 且三工件齐` 改为 **`phase = inception 且工件齐`**，并注明工件齐的判据按 route：`route=express` → prd.md + test-strategy.md 两工件（architecture.md 由 prd.md 内联语义对齐小节替代）；`route` 缺失/非法=classic → 三工件。否则 express intent（2 工件）会被字面量"三工件齐"判为未齐而拒绝进门。
+1. `plugins/aidlc/commands/aidlc/gate.md` 门推断真值表第 3 条：`phase = inception 且三工件齐` 改为 **`phase = inception 且工件齐`**，并注明工件齐的判据按 route：`route=express` → prd.md + test-strategy.md 两工件（architecture.md 由 prd.md 内联语义对齐小节替代）；`route` 缺失/非法=classic → 三工件。否则 express intent（2 工件）会被字面量"三工件齐"判为未齐而拒绝进门。（R3 修订：响应 m-D 配合——prd AC4.1 Given 已由 pm 本轮收口为"工件齐（classic 路线三件、express 路线两件）"，与本触点"工件齐判据按 route"表述核对一致。）
 2. `plugins/aidlc/skills/party-review/SKILL.md` 流程第 1 步：gate1 评审对象从固定"prd.md/architecture.md/test-strategy.md"改为**按活跃 intent 的 route 取评审集合**（classic 三工件；express 评审 prd.md（含内联语义对齐小节）与 test-strategy.md）。扇出前由编排者读 route 决定，SKILL 文本只写分支规则。
 3. `plugins/aidlc/agents/dev.md` Construction 必读清单：加括注"express 路线无 architecture.md，语义对齐以 prd.md 内联小节为准"——否则 express intent 的 dev 泳道按清单找不到 architecture.md。
 4. `plugins/aidlc/commands/aidlc/status.md` 工件清单报告：缺失项判定按 route 期望清单——express intent **不得**把 architecture.md 报为缺失/异常；报告增显一行 `route=<值>`（显示语义同 session-context 回显）。
@@ -59,6 +60,12 @@
 6. `plugins/aidlc/commands/aidlc/resume.md`：对账差异表新增三类披露行——(i) "F4 未机械校验（损坏修复路径）"（见绕过路径 b）；(ii) preserveKeys 键缺失（修复后 state 缺 `route`/`testBaseline`/`unitStatus`/`tddLock`/`tddLockPaths` 之一而 phase 已过对应阶段，决策 #11）；(iii) `testBaseline.command` 与 plan.md 声明不一致（R1：M7）；对账时呈示 `testBaseline.recordedAt` 与对应 git 提交。
 7. `plugins/aidlc/skills/aidlc/SKILL.md` §4（状态查询与续跑）：`/aidlc:status` 与 resume 呈示规则增补——`testBaseline` 缺失或 `unavailable: true` 时显示"无基线 / 基线不可用"（AC2.3/AC2.4 语义），不得呈现为"已对照"。
 8. `plugins/aidlc/commands/aidlc/inception.md`（改动规格，一行）：分级确认并入既有 A1 拆分确认——同一次 AskUserQuestion 同时确认"进入生命周期"与"路线选择（express/classic）"（AC1.1），裁决逐字记入 decisions.md 后才建 intent；不新增独立提问步骤。
+
+**express 触点补充（R3 修订：响应 M-R3-2——Operations retro 分支三处，改法均为"按 route 分支（express=人类可选）"，与决策 #3 ④"retro.md 人类可选"对齐）**：
+
+9. `plugins/aidlc/skills/aidlc/SKILL.md:104-105`（学习回流"当前 intent 的学习全部进 `retro.md`"与完结判据"`retro.md` 落盘"的硬性要求）：改为按 route 分支——`route=express` 时 retro.md 为人类可选（裁决形态随 OQ1 子项：gate2 批准时一并裁决或一律省略），classic 保持硬性要求。
+10. `plugins/aidlc/skills/aidlc/SKILL.md:241`（§7 retro.md 工件模板）：同上按 route 分支（express=人类可选）。
+11. `plugins/aidlc/commands/aidlc/ops.md:11`（"完结后写 `retro.md`（复盘），phase 置 `done`"要求）：同上按 route 分支（express=人类可选）。
 
 **依赖关系**：F4 依赖 prd.md/test-strategy.md 既有模板中的 AC 编号约定——子编号制（`AC\d+\.\d+`，本仓库 prd 实际用法）与扁平制（`**AC1**`，SKILL §7 模板约定）双粒度归一规则见数据模型节（R1 修订：响应 B1）；F2 的回归对比依赖 `tddLockPaths` 与 `testBaseline.suites` 区分"本 intent 新增测试/新增套件"（R1 修订：响应 M7）；F1 的 express 裁剪不改变任何 hook 判定行为（guard-gates 不读 `route`，见关键决策 #3/#12）。
 
@@ -88,14 +95,14 @@
 - `route`：缺失/非法值一律**生效语义**为 `classic`（fail-safe 到全量流程，与 auto-route 开关"缺失=off"的惯例一致，D11）。仅在 Inception 建 intent 时经 AskUserQuestion 确认后写入；写入后变更仅限 gate1 批准前、且须人类裁决逐字进 decisions.md。
   - **（R1 修订：响应 M4/m2）回显语义**（auto-route.mjs 与 session-context.mjs 同构）：字段存在且合法 → `route=express` / `route=classic`；字段存在但非法 → **`route=<原值>(invalid→classic)`**（原值透传保持可观测/可调试，生效语义显式标为 classic，与 T06"按 classic 兜底、不崩溃"一致）；字段缺失（存量 intent）→ **不追加任何 route 字样**——保持 v1.1 输出字节级不变，T03 的零行为变化断言才成立。
 - `testBaseline`：Construction 第 0 步由编排者运行验证命令并记录（时序锚点定义见决策 #7）。`command` 记录实际执行原文，与 plan.md 声明不一致 = resume 对账差异项（R1 修订：响应 M7/m5）。`suites` 记录基线时**参与统计的套件文件清单**，回归比对只覆盖该清单（套件集合漂移排除，见决策 #6）。`failingTests` 可解析到用例粒度时填全量名单；无法解析时省略该键，退化为计数比较。`coverage` 默认 `null`。
-  - **（R1 修订：响应 M7）验证命令的规范来源与本 intent 建议值**：命令原文以 plan.md"验证命令"声明段为规范来源，state 只记实际执行原文（两者不一致 = 对账差异）；plan.md 未声明或存量 intent 无声明时，Sprint Planning 用 AskUserQuestion 向人类询问后回填。本 intent 建议声明值：`node scripts/tests/guard-gates.test.mjs; node scripts/tests/auto-route.test.mjs`——**不用 `&&` 串联（R2 修订：响应 N13）**：首套件存量失败会短路、吞掉次套件的基线记录，与"逐套件解析求和"矛盾；分立执行/`;` 保证两套件基线各自可得。check-plugin.sh 第 3/4 步（`plugins validate`/`plugins list`）依赖本地 ZCode 二进制（`ZCODE_CJS` 或安装路径探测），跨环境不可复现，不纳入基线口径；两套件纯 node 运行、输出结构化，是可复现的最小集。最终值以 plan.md 声明/人类裁决为准。
+  - **（R1 修订：响应 M7）验证命令的规范来源与本 intent 建议值**：命令原文以 plan.md"验证命令"声明段为规范来源，state 只记实际执行原文（两者不一致 = 对账差异）；plan.md 未声明或存量 intent 无声明时，Sprint Planning 用 AskUserQuestion 向人类询问后回填。本 intent 建议声明值：`node scripts/tests/guard-gates.test.mjs; node scripts/tests/auto-route.test.mjs`——**不用 `&&` 串联（R2 修订：响应 N13）**：首套件存量失败会短路、吞掉次套件的基线记录，与"逐套件解析求和"矛盾；分立执行/`;` 保证两套件基线各自可得（R3 修订：响应 m-c——`;` 串联仅限 POSIX shell；Windows cmd 不支持 `;` 作命令分隔，应分立执行两条命令）。check-plugin.sh 第 3/4 步（`plugins validate`/`plugins list`）依赖本地 ZCode 二进制（`ZCODE_CJS` 或安装路径探测），跨环境不可复现，不纳入基线口径；两套件纯 node 运行、输出结构化，是可复现的最小集。最终值以 plan.md 声明/人类裁决为准。
   - **（R1 修订：响应 M7）pass/fail 计数解析口径（最小约定）**：基线与回归重跑共用同一解析语义。本仓库两套件输出结构一致——逐行 `ok ` / `FAIL ` 前缀的用例行（guard-gates.test.mjs:43、auto-route.test.mjs:51 同约定）+ 尾行 `ALL <n> SCENARIOS|CHECKS PASSED`（失败尾行 `<bad>/<n> FAILED`）。解析约定：`/^ok\b/` 计 pass、`/^FAIL\b/` 计 fail，total = pass + fail；尾行 `ALL <n> …` 的 n 与 pass+fail 交叉核对，**不一致或尾行缺失 = 解析失败 → 按"基线不可用"显式记录（`unavailable: true`、计数键置 null，见下条）并告警**（T12 语义，不得虚构 0 fail；R2 修订：响应 N6）；`suites` 清单内多套件逐套件解析后求和。`failingTests` 取 FAIL 行去前缀后的整行文本作为用例标识（两套件 FAIL 行格式略异，取整行是兼容两者的最小确定性约定）。
-  - **（R2 修订：响应 N6）`unavailable` 字段（"基线不可用"的 schema 表示）**：布尔，缺省 `false`；**已尝试记录但验证命令执行失败（非零退出/命令不存在/超时）或输出不可解析**时置 `true`，此时 `total`/`pass`/`fail` 计数键置 `null`、`failingTests` 省略——显式表示"想记记不了"，不虚构 0 fail。此为 T12（P0）断言的 schema 落点；是否因基线不可得阻断后续流程仍归 PRD OQ6 人类裁决，本 schema 只负责可观测表示。
+  - **（R2 修订：响应 N6）`unavailable` 字段（"基线不可用"的 schema 表示）**：布尔，缺省 `false`；**已尝试记录但验证命令执行失败（非零退出/命令不存在/超时）或输出不可解析**时置 `true`，此时 `total`/`pass`/`fail` 计数键与 `coverage` 键置 `null`、`failingTests` 省略、`suites` **保留原清单**（R3 修订：响应 m-f——`coverage` 与计数键同批置 null；本次参与统计的套件清单不因不可用而丢失，比对范围与 resume 对账仍可追溯）——显式表示"想记记不了"，不虚构 0 fail。此为 T12（P0）断言的 schema 落点；是否因基线不可得阻断后续流程仍归 PRD OQ6 人类裁决，本 schema 只负责可观测表示。
 - **（R2 修订：响应 N7(dev)）存量 intent 无这两个字段：route/testBaseline 相关行为零变化，以编排者写入合法保留既有键为前提**——R4 preserveKeys 扩展对存量 intent 同样生效：漏写既有键的整体覆写将被 deny，此为有意的强化而非行为回归。语义细目：`route` 缺省 classic 走全量协议；`testBaseline` 缺失时验证步骤退化为现状（"验证命令通过"即满足），`/aidlc:status` 显示"无基线"。
 - **（R1 修订：响应 M6）覆写保留 = R4 确定性扩展，非纯 prompt 纪律**：guard-gates Rule 4 在既有 history 乐观锁同块内增加**键保留校验**（实现要点见决策 #11）——整体覆写丢失 `route`/`testBaseline`/`unitStatus`/`tddLock`/`tddLockPaths` 中的既有键 → deny。原"SKILL §2 补一条覆写保留纪律"的方案降级为辅助（prompt 层仍写明，但不再暗示它与机制层同等可靠——M6 指出的正是这种暗示失实）。
 - hook 侧兼容：`findActiveIntent`/`loadIntent` 只 `JSON.parse`，新字段透传无害；guard-gates 不做 schema 校验，新字段不触发任何既有规则。
 
-### F4 机械校验规格（guard-gates.mjs 内，确定性实现；本节整体为 R1 修订：响应 B1/M5/m11；R2 修订：响应 N1/N4/N3/m-N4/N7/N8/N10——T 来源收口、连接符文法、占位正则、空工件缝、直跳窄缝、回归归属）
+### F4 机械校验规格（guard-gates.mjs 内，确定性实现；本节整体为 R1 修订：响应 B1/M5/m11；R2 修订：响应 N1/N4/N3/m-N4/N7/N8/N10——T 来源收口、连接符文法、占位正则、空工件缝、直跳窄缝、回归归属；R3 修订：响应 M-R3-1/m-d/m-e——连字符入剔除字符类、映射列定位细节、括注不计 token）
 
 **触发点**：Write `state.json` 且"盘上旧 state 可解析且 `old.phase !== "gate1"`，新内容 `new.phase === "gate1"`"（仅转移瞬间校验，覆写 updatedAt 等不重复触发）。另有两条非典型路径的处置见下方"绕过路径处置"。
 
@@ -110,11 +117,12 @@
    - 两约定**不混提**：比对粒度由 P 唯一决定，同一对小工件内两种粒度并存即视为格式漂移，走不可解析分支（不猜测、不展开）。
 4. **T 集合提取（R2 修订：响应 N1——来源收口为测试点清单表"映射 AC"列单元格，不再取 test-strategy.md 全文）**：
    - **来源限定**：仅从 test-strategy.md `## 测试点清单` 表的 **"映射 AC"列单元格**提取；该列之外的任何正文（场景描述、分层策略、缺口小节等，含示例性字样如"例如 AC99""参见 AC1.1"）一律**不产生 T 证据**。
+   - **映射列定位（R3 修订：响应 m-d）**：按表头行的 **"映射 AC"列名匹配**定位目标列（非固定列序）；解析时**跳过表头行与 `|---|` 分隔行**；cell 内 `\|` 转义（竖线字面量）不作为列边界；找不到"映射 AC"表头（含测试点清单表整体缺失）→ **按不可解析分支 allow+披露**。
    - **整格剔除（区间连接符，R2 修订：响应 N4/N3）**：单元格内出现任一区间/范围记法即**整格剔除、两端 token 均不入 T**——范围声明的映射语义机械层无法展开验证，宁可少算交人工（假阴性），不可多算成假覆盖。参考判定（含全角半角），命中任一即整格剔除：
-     - 字符类 `[–—~～]`（en dash／em dash／半角波浪线／全角波浪线）、`\.\.`（连续双点）、`…`（省略号字符）、字面 `至`／`到`；
-     - 连字符处于字母与数字相邻处：正则 `/[A-Za-z][-－]\d|\d[-－][A-Za-z]/`（如 `AC1.1-AC4.4` 的半角 `-`；`－` 为全角连字符）。
+     - 字符类 `[–—~～\-－]`（en dash／em dash／半角波浪线／全角波浪线；R3 修订：响应 M-R3-1——补入半角连字符 `-` 与全角连字符 `－`，**连字符出现在映射列 cell 即整格剔除，不再要求字母/数字相邻**（原相邻判定正则 `/[A-Za-z][-－]\d|\d[-－][A-Za-z]/` 作废）：`AC1.1 - AC4.4` 型空格环绕写法原可借空格分隔绕过相邻判定、两端各自入 T，属假覆盖漏洞；合法分隔白名单 `[，,、/\s]` 本不含连字符，此收紧无副作用）、`\.\.`（连续双点）、`…`（省略号字符）、字面 `至`／`到`。
    - **纯多 token 格合法（R2 修订：响应 N3/N4——取代 R1"分隔符复合格整格剔除"规则）**：分隔符切分后**每个分隔 token 均为合法编号 token** 的格（如 `AC4.1 / AC4.3`）为合法多映射，逐 token 入 T；整格剔除的触发条件**仅剩区间连接符**。
    - **逐 token 提取**：通过整格剔除的单元格按 `[，,、/\s]+` 分隔取 token，仅匹配第 2 步编号正则的 token 入 T；混合格（如 `AC1.2 / 全局`）按 token 级处理——合法编号 token（`AC1.2`）照常入 T，非编号 token（`全局`）不产生证据。
+   - **括注不计入 token（R3 修订：响应 m-e）**：映射列单元格内的括注（如"（R1 修订：…）"）不计入 token——hook 侧不做括注识别或剥离，注记文字按既有 token 级文法属非编号 token、不产生 T 证据，若其中含区间连接符或连字符则整格剔除先行触发（宁可少算方向，假 deny 的修复路径是清理工件）；映射格的编写纪律为只保留编号 token、括注移出映射列（场景列或删除）。
    - **粒度归一**：其余 token 按 P 的制式取同粒度：子编号制下裸组 token 不入 T（组级映射不算子级证据）；扁平制下取 `ACn`。
    - **P/T 提取不对称及其理由（R2 修订：响应 N1）**：P 侧维持现状——验收标准小节内严格提取不变。理由（代价不对称）：P 侧假 deny 的修复路径是改正 prd 工件本身，无绕过通道、成本一次性；T 侧假覆盖则是伪映射证据**静默通过机械门**，代价更高且不可见。故 P 取严（小节内严格提取），T 取结构化（映射列收口）。
 5. **判定**：
@@ -143,9 +151,10 @@
 10. 不可解析 allow + 披露文本存在
 11. 创建即 phase=gate1 的 brand-new 写入 deny
 12. 非 gate1 转移不触发（既有回归保留）
-13. express 两工件路线同样适用（无 architecture.md 不影响 F4）
+13. express 两工件路线同样适用（无 architecture.md 不影响 F4）（R3 修订：响应 m-D 配合——与 prd AC4.1 收口措辞"classic 三件/express 两件"核对一致）
 14. 映射列外不提取：场景描述中的示例字样"例如 AC99"不产生 T 证据（R2 修订：响应 N1）
 15. 纯多 token 格：映射列内 `AC4.1 / AC4.3` 双 token 各自入 T（R2 修订：响应 N1/N3）
+16. 空格环绕连字符整格剔除：`AC1.1 - AC4.4`（空格环绕半角连字符）整格剔除、两端不入 T（R3 修订：响应 M-R3-1——原空格分隔可绕过相邻判定使两端入 T，假覆盖）
 
 ### plan.md 模板变更（F3 + F2 命令声明）
 
@@ -159,11 +168,12 @@
 | PRD 动词 | 物理语义 | 说明 |
 |---|---|---|
 | 分级（F1）→ AC1.1、AC1.3、AC1.4 | state.json 写入 `route` 字段 + decisions.md 逐字留痕 | AI 提议、AskUserQuestion 确认；无 hook 参与判定 |
-| 裁剪（F1）→ AC1.2 | express 路线不派发 architect、不产 architecture.md；party-review 扇出压缩；五处触点按 route 分支（见触点清单） | 纯 prompt 层裁剪；hook 强制项（人类回执、decisions 留痕、TDD 锁）零裁剪 |
+| 裁剪（F1）→ AC1.2 | express 路线不派发 architect、不产 architecture.md；party-review 扇出压缩；八处触点按 route 分支（见触点清单；R3 修订：响应 M-R3-2——五→八，补 retro 三处） | 纯 prompt 层裁剪；hook 强制项（人类回执、decisions 留痕、TDD 锁）零裁剪 |
 | 保住（F1）→ AC1.5 | 既有 auto-route config 门零改动：`autoRouting=false`/config 缺失/畸形 → 不注入路由、不弹确认，与现状一致 | 既有 opt-in 惯例（D11）隐式保住，无新代码路径；T08 回归兜底（R2 修订：响应 N8——补行） |
 | 兜底/变更（F1）→ AC1.6、AC1.7 | AC1.6：非法值一律按 classic 生效，回显 `route=<原值>(invalid→classic)`（决策 #12）；AC1.7：express→classic 单向升级、gate1 批准前、人类裁决留痕（决策 #9）；缺省=classic（决策 #2） | 语义已在数据模型与决策 #2/#9/#12，本行补 AC 对齐（R2 修订：响应 N8——补行） |
 | 记录（F2）→ AC2.1、AC2.3 | Construction 第 0 步运行验证命令，结果写 state.json `testBaseline` | 单一事实源在 state.json，不双写 plan.md；命令规范来源 = plan.md 声明（R1：M7） |
 | 对比（F2）→ AC2.2 | gate2 验证时重跑同一命令，新失败=回归=BLOCKER | 用例粒度优先，计数粒度兜底；比对范围限 `suites` 清单（R1：M7） |
+| 续跑（F2）→ AC2.4 | 存量 intent 无 `testBaseline` 字段：`/aidlc:resume` 续跑行为与现状一致——不要求回填基线、不中断、不弹新确认（降级语义见数据模型"存量 intent 无这两个字段"条与决策 #2） | 落点 = 触点 7（status/resume 呈示规则：无基线时显示"无基线"，不得呈现为"已对照"）+ 数据模型降级语义；与 prd AC2.4"续跑行为与现状一致，不要求回填基线"对应（R3 修订：响应 m-Q2/m-a——补行，21 条 AC 全部有行） |
 | 声明（F2）→ AC2.5 | 验证命令规范来源 = plan.md"验证命令"声明段；未声明时 Sprint Planning 以 AskUserQuestion 向人类询问后回填 | R1：M7 已落机制，AC2.5 为其 PRD 背书，无新增设计（R2 修订：响应 N8——补行） |
 | 扫描（F3）→ AC3.1、AC3.2、AC3.3、AC3.4 | Sprint Planning 用 Grep/Glob 查引用方，结果写 plan.md 影响面列 | 纯 prompt 层，无机制强制；无被测单元，验证走 E2E/流程评审（R1：B3） |
 | 校验（F4）→ AC4.1、AC4.2、AC4.3 | guard-gates.mjs 在 phase→gate1 转移时按提取规格机械比对：缺口 deny、幻影 deny | 机制层强制；缺失=deny、不可解析=allow+披露交人类门（R1：B1/M5） |
@@ -202,7 +212,7 @@
 
 **fail-open 风险分析（新增改动逐项，R1 修订：响应 B2/M5）**：
 
-1. **guard-gates F4 扩展**：失败边界三分后唯一 fail-open 分支是"不可解析 → allow"，且**必须携带披露文本，禁止静默**（allow+reason 与 deny 同构，strict schema 零改动）。工件缺失与缺口/幻影均 deny，deny 分支不受解析异常影响（提取成功才进入比对）。风险点：误 deny（映射列记法漂移被整格剔除造成缺口误报；R2 修订：响应 N1——原"正文讨论性 AC 字样进 T"风险已随 T 集合收口到映射列而消除）。缓解：映射列来源限定 + 区间连接符整格剔除 + 占位记法排除（P 侧小节限定不变；R2 修订：响应 N1/N4——原"复合格整格剔除"被 token 级文法取代）；误 deny 修复路径是改正工件，无绕过通道。回归要求：既有 guard-gates 28 场景全绿（套件不动，T40 口径稳定）+ F4 规格节 15 个新场景（归独立 ac-coverage.test.mjs，check-plugin.sh §2 增第三行；R2 修订：响应 N10）。
+1. **guard-gates F4 扩展**：失败边界三分后唯一 fail-open 分支是"不可解析 → allow"，且**必须携带披露文本，禁止静默**（allow+reason 与 deny 同构，strict schema 零改动）。工件缺失与缺口/幻影均 deny，deny 分支不受解析异常影响（提取成功才进入比对）。风险点：误 deny（映射列记法漂移被整格剔除造成缺口误报；R2 修订：响应 N1——原"正文讨论性 AC 字样进 T"风险已随 T 集合收口到映射列而消除）。缓解：映射列来源限定 + 区间连接符（含连字符，R3 修订：响应 M-R3-1）整格剔除 + 占位记法排除（P 侧小节限定不变；R2 修订：响应 N1/N4——原"复合格整格剔除"被 token 级文法取代）；误 deny 修复路径是改正工件，无绕过通道。回归要求：既有 guard-gates 28 场景全绿（套件不动，T40 口径稳定）+ F4 规格节 16 个新场景（归独立 ac-coverage.test.mjs，check-plugin.sh §2 增第三行；R2 修订：响应 N10；R3 修订：响应 M-R3-1——15→16）。
 2. **guard-gates R4 键保留扩展**：纯 deny 增量，无 fail-open 面；风险是误伤合法写路径——已按"键保留、值放行"收窄校验，`tddLockOverride` 明确不入集合；损坏修复路径的覆盖洞由 resume 对账项披露兜底（决策 #11）。
 3. **auto-route / session-context route 回显**：只读拼接既有字段，不写文件、不改判定逻辑；非法值按"原值+(invalid→classic)"显示，零新风险。
 4. **express 裁剪**：不触碰任何 hook 判定代码路径——guard-gates 不读 `route` 字段（F4 工件存在性对两条路线同规），两条路线机制强制完全一致。这是刻意的决策（见决策 #3）：裁剪面 100% 落在 prompt 层，§0 守卫边界声明无需修订。
