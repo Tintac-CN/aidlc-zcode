@@ -30,6 +30,21 @@ const lines = [
   `Gates: gate1=${gates.gate1 ?? 'pending'}, gate2=${gates.gate2 ?? 'pending'}${s.tddLock ? ', TDD-LOCK=on' : ''}${s.tddLockOverride ? ', TDD-OVERRIDE=on' : ''}`
 ];
 
+// F1 route echo (decision #12): read-only injection after the active intent's
+// status lines — same three-state semantics as auto-route.mjs's routeEcho
+// (kept byte-identical there so the two injectors cannot drift):
+//   field absent/null       → no echo at all (v1.1 output stays byte-identical, T03)
+//   'express' | 'classic'   → `route=<value>` verbatim
+//   anything else (incl. 1) → `route=<原值>(invalid→classic)` — raw value passed
+//                             through, effective semantics marked classic (T06).
+// The hook never classifies on this value and never writes files.
+{
+  const v = s.route;
+  if (v !== undefined && v !== null) {
+    lines.push(v === 'express' || v === 'classic' ? `route=${v}` : `route=${String(v)}(invalid→classic)`);
+  }
+}
+
 // Auto-route mode line: only when the project has ever toggled it (no config
 // file = feature never touched = zero extra noise, same as v1.0). The switch
 // only controls routing injection, never the guards.

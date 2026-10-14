@@ -54,6 +54,20 @@ function toggleContract(target, cfg) {
   };
 }
 
+// F1 route echo, decision #12 — read-only, three states. Keep byte-identical
+// with session-context.mjs's routeEcho so the two injectors cannot drift:
+//   field absent/null       → no echo at all (v1.1 output stays byte-identical, T03)
+//   'express' | 'classic'   → `route=<value>` verbatim
+//   anything else (incl. 1) → `route=<原值>(invalid→classic)` — raw value passed
+//                             through for observability, effective semantics
+//                             marked classic (fail-safe, T06). Never branched on.
+function routeEcho(s) {
+  const v = s?.route;
+  if (v === undefined || v === null) return null;
+  if (v === 'express' || v === 'classic') return `route=${v}`;
+  return `route=${String(v)}(invalid→classic)`;
+}
+
 function routeContract(active) {
   const lines = [
     '[AIDLC auto-route: ON] 本条用户消息适用自动路由；显式 /aidlc: 命令（若用户敲了）永远优先。'
@@ -68,6 +82,10 @@ function routeContract(active) {
       head += `，units ${ids.filter(k => us[k] === 'done').length}/${ids.length} done`;
     }
     lines.push(head + '）。');
+    // F1 route echo (decision #12): read-only injection right after the active
+    // intent line — the hook never classifies on it and never writes files.
+    const echo = routeEcho(s);
+    if (echo) lines.push(echo);
   } else {
     lines.push('活跃 intent：无。');
   }
