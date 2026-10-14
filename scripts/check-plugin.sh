@@ -40,6 +40,8 @@ done
 echo "== 2. guard regression suites =="
 node scripts/tests/guard-gates.test.mjs
 node scripts/tests/auto-route.test.mjs
+node scripts/tests/route-profile.test.mjs
+node scripts/tests/ac-coverage.test.mjs
 
 echo "== 3. manifest =="
 run plugins validate plugins/aidlc

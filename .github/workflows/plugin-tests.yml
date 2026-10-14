@@ -29,3 +29,5 @@ jobs:
         run: |
           node scripts/tests/guard-gates.test.mjs
           node scripts/tests/auto-route.test.mjs
+          node scripts/tests/route-profile.test.mjs
+          node scripts/tests/ac-coverage.test.mjs
