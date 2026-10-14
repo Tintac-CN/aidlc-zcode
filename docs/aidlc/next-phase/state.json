@@ -1,0 +1,13 @@
+{
+  "slug": "next-phase",
+  "intent": "根据调研结果，开始推进插件到下一个阶段",
+  "phase": "inception",
+  "gates": { "gate1": "pending", "gate2": "pending" },
+  "tddLock": false,
+  "tddLockPaths": [],
+  "tddLockOverride": null,
+  "updatedAt": "2026-10-14T12:57:13Z",
+  "history": [
+    { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" }
+  ]
+}
