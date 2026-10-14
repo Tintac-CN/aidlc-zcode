@@ -17,8 +17,8 @@
     "unavailable": false,
     "coverage": null
   },
-  "unitStatus": { "U1": "done", "U2": "pending", "U3": "pending", "U4": "pending", "U5": "pending" },
-  "updatedAt": "2026-10-14T17:15:00Z",
+  "unitStatus": { "U1": "done", "U2": "blocked(pk5-unlock)", "U3": "done", "U4": "done", "U5": "pending" },
+  "updatedAt": "2026-10-14T18:02:10Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
     { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
@@ -31,6 +31,7 @@
     { "at": "2026-10-14T16:53:18Z", "from": "gate1", "to": "construction", "why": "human approved at 4th review (GATE-APPROVED gate1 2026-10-15 in decisions.md): zero BLOCKER (0B/2M/5m); approved with conditions — M-R4-1/M-R4-2 as first Construction action, 5 MINORS alongside; ratification package ①-④ effective" },
     { "at": "2026-10-14T17:05:00Z", "from": "none", "to": "construction/baseline", "why": "F2 step-0 test baseline recorded per plan.md declaration (2 suites, 51/51 pass, cross-checked tail lines, unavailable=false); Sprint Planning complete (plan.md + units U1-U5); unitStatus initialized" },
     { "at": "2026-10-14T17:06:21Z", "from": "U1", "to": "U1=done", "why": "approval conditions landed inline (orchestrator-owned per decisions.md): architecture.md scenario 17 + whole-token full-match semantics + m-e rewrite + count chain 16→17 + route-profile two-line declaration; test-strategy T40 count/L68 registration/T54 grammar/T53-T56 line numbers; prd header R3 record (m-R4-5)" },
-    { "at": "2026-10-14T17:15:00Z", "from": "tddLock=false", "to": "tddLock=true", "why": "TDD lock set per /aidlc:lock-tests protocol: failing-test commit b39fdbc verified (scripts/tests/ac-coverage.test.mjs 32/49 RED, scripts/tests/route-profile.test.mjs 10/15 RED, existing 28+23 untouched green); tddLockPaths union-accumulated to the two contract files; edits to them now deny until /aidlc:unlock-tests" }
+    { "at": "2026-10-14T17:15:00Z", "from": "tddLock=false", "to": "tddLock=true", "why": "TDD lock set per /aidlc:lock-tests protocol: failing-test commit b39fdbc verified (scripts/tests/ac-coverage.test.mjs 32/49 RED, scripts/tests/route-profile.test.mjs 10/15 RED, existing 28+23 untouched green); tddLockPaths union-accumulated to the two contract files; edits to them now deny until /aidlc:unlock-tests" },
+    { "at": "2026-10-14T18:02:10Z", "from": "U2/U3/U4", "to": "U2=blocked(pk5-unlock), U3=done, U4=done", "why": "dev implemented U2 (guard-gates F4 pipeline + preserveKeys + bypass-a closure) and U3 (route echo 3-state in auto-route/session-context); route-profile 15/15, guard-gates 28/28, auto-route 23/23, dogfood plain allow P=21/T=21 — but ac-coverage 48/49: pk5 fixture defect (disk state accidentally spreads PKBASE, contradicts approved decision #11; byte-level evidence in dev report and decisions.md). Unlock requires human approval per lock protocol — U2 blocked pending ruling; U4 doc touchpoints 1-11 landed (commit 40f17f7)" }
   ]
 }
