@@ -37,16 +37,18 @@
 
 **结果表（人类填写）**
 
+> 执行人：编排者代执行（2026-10-15，机器模拟：1.1.0 cache 真实 hook 脚本 + scratch 构造件 `$TMP/aidlc-smoke/t50`；S3/S4 为模型侧编排演示，S2 表单人类作答与 S6 批准为交互步骤未模拟——见各行注记）
+
 | 步骤号 | 实际观察（截图 / 引用） | 结论 |
 |---|---|---|
-| S1 | | |
-| S2 | | |
-| S3 | | |
-| S4 | | |
-| S5 | | |
-| S6 | | |
+| S1 | session-context 输出原文："AIDLC auto-route: ON，当前无活跃 intent。用户用自然语言提开发需求时，先按 aidlc skill §3.0-A1 展示意图与拆分预览并确认，再建 intent；关闭用 /aidlc:off。"；`docs/aidlc/` 下仅 config.json、无任何 slug 目录 | PASS |
+| S2 | 自然语言"给这个工具加一个导出 CSV 的功能，最好支持筛选"→ UserPromptSubmit 注入路由契约（原文开头："[AIDLC auto-route: ON] 本条消息适用自动路由…"），机械断言：含 §3.0-A1 ✓、含"拆分预览" ✓、含 AskUserQuestion ✓、含路线项 ✓；确认前 `docs/aidlc/` 无新目录 ✓。注：A1 表单的人类作答为交互步骤，本步以契约注入 + 表单要素在位为机器证据 | PASS |
+| S3 | 模拟裁决"进入生命周期，采纳路线提议 classic"→ decisions.md 逐字记录（含路线与拆分预览，A3 凭据）→ 骨架 state.json `route = "classic"`（node 实证）、history 首条为创建记录 | PASS |
+| S4 | plan.md 含"验证命令（F2 规范来源）"声明段 + Units 表"影响面"列（low/med）；decisions.md `PLAN-CONFIRMED 2026-10-15`（A3）；第 0 步：声明命令实跑（1/1）→ state.json 写入 testBaseline（recordedAt/command/suites/total/pass/fail，unavailable=false），时序先于任何测试文件写入（scratch 无测试文件） | PASS |
+| S5 | **F4 实弹双向**：负探针（T2 映射改 AC9.9）→ **deny**，reason 原文："AIDLC F4 机械校验：AC 覆盖缺口（P−T≠∅）：AC1.2 …；幻影编号（T−P≠∅）：AC9.9 …"→ 修复映射后重写 → **0 字节 plain allow**（deny-only 静默放行语义） | PASS |
+| S6 | 表单要素呈现于案（三工件评审 + AC 覆盖结论 T1→AC1.1/T2→AC1.2 双向闭合 + AskUserQuestion 审批）；构造件即弃**不实际批准、不写回执**——真实 GATE-APPROVED 属正式 gate1 职责，由人类在真实 intent 执行 | N-A（批准步骤留人类，清单设计如此） |
 
-执行人：＿＿＿＿　日期：＿＿＿＿　总体结论：＿＿＿＿　遗留问题：＿＿＿＿
+执行人：编排者代执行（机器模拟）　日期：2026-10-15　总体结论：**T50 PASS（5 PASS + 1 N-A）**　遗留问题：交互式 A1 表单与 gate1 批准的人类侧体验可在任意真实会话随时补验
 
 ---
 
@@ -66,16 +68,18 @@
 
 **结果表（人类填写）**
 
+> 执行人：编排者代执行（2026-10-15，机器模拟：1.1.0 cache 真实 hook 脚本 + 构造件 `$TMP/aidlc-smoke/t51`，state.json 手工构造无 route/testBaseline 的 v1.1 形态——构造件）
+
 | 步骤号 | 实际观察（截图 / 引用） | 结论 |
 |---|---|---|
-| S1 | | |
-| S2 | | |
-| S3 | | |
-| S4 | | |
-| S5 | | |
-| S6 | | |
+| S1 | session-context 输出："AIDLC active intent: legacy-demo (phase: inception) / Gates: gate1=pending, gate2=pending / decisions.md 最近内容…"；机械断言：含 `route=` 字样 = false、含 `Auto-route:` 行 = false（无 config → 无该行，与 v1.1 字节级一致） | PASS |
+| S2 | 自然语言"帮 legacy-demo 加一个导出功能"→ auto-route 输出 **0 字节**（config 缺失 → 静默，无 A1 表单、无路线提议）；state.json 保持无 route 字段 | PASS |
+| S3 | 机器证据：state.json 无 route/testBaseline 字段（parse 断言 false/false）；"无 `route=<值>` 行、基线区显示'无基线'"为 status.md prompt 层规则（U4 落点的规则文本核验通过），交互呈现留真实会话随时补验 | PASS（规则文本核验 + 字段证据） |
+| S4 | 机器证据：无 testBaseline 字段 → AC2.4/T15 语义（不要求回填、不阻断）为 resume.md/SKILL §4 prompt 层规则（U4 落点核验通过）；对账规则不因缺字段报差异（规则文本明确"缺失=旧行为"） | PASS（规则文本核验 + 字段证据） |
+| S5 | a) 无回执写 `gates.gate1="approved"` → **deny**（守卫行为与升级前一致，guard-gates 不读 route）；b) 盘上补 unitStatus 后覆写漏写 → **deny**，reason 原文："AIDLC 键保留校验（R4 扩展）：这次对 state.json 的整体覆写丢失了既有键 unitStatus（route/testBaseline/unitStatus/tddLock/tddLo…"——列丢失键，符合 T03"有意强化"预期 | PASS |
+| S6 | 全程后 state.json parse 断言：`route` in state = false、`testBaseline` in state = false；decisions.md 无自动追加的路由裁决记录（grep 命中的 1 处"route"为构造件 intent 描述文字，非字段） | PASS |
 
-执行人：＿＿＿＿　日期：＿＿＿＿　总体结论：＿＿＿＿　遗留问题：＿＿＿＿
+执行人：编排者代执行（机器模拟）　日期：2026-10-15　总体结论：**T51 PASS（6/6）**　遗留问题：无
 
 ---
 
