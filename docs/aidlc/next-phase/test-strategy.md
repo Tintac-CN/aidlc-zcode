@@ -1,22 +1,22 @@
 # Test Strategy: next-phase
 
-> 产出者：qa　日期：2026-10-14　来源：intent.md + prd.md　修订：R1（响应 Gate#1 打回：B3 F2/F3 诚实降级、M2 映射语义修正、M5 F4 负路径增补、m15/m16/m17/m18；上轮：对齐拍引用回填与裁决同步。既有测试点编号不变，只改层级/映射/描述，新增行顺延编号）
+> 产出者：qa　日期：2026-10-14　来源：intent.md + prd.md　修订：R2（Gate#1 打回后极小修订轮，逐条响应 gate1-ai-r2：N1 T52 对齐已裁决 T 提取规格、N3 T54 整格剔除方向、N5 T01/T02/T04 降级 E2E/流程评审、N7(dev) T03 收口、N10 T40 总数口径、m-N4 T58 收口 AC5.1 字面、N6(dev) T12 挂起语更新；R1：响应 Gate#1 打回 B3 F2/F3 诚实降级、M2 映射语义修正、M5 F4 负路径增补、m15/m16/m17/m18。既有测试点编号不变，只改层级/映射/描述）
 
 ## 测试点清单
 
 | # | 映射 AC | 场景（正/负路径） | 层级 | 优先级 |
 |---|---|---|---|---|
-| T01 | AC1.1 | 正：新 intent 接入，AI 按规模提议 express，人确认后 state.json 写入 route=express 且 history 追加一条路由决策记录 | 单元 | P0 |
-| T02 | AC1.1 | 正：大规模输入提议 classic，确认后写入 route=classic；两条路线的写入结构一致 | 单元 | P1 |
-| T03 | AC1.4（R1 修订：响应 M2——存量零行为属兼容域，原 AC1.2） | 负：存量 intent 的 state.json 无 route 字段——session-context / auto-route / guard-gates 三个 hook 的输出与 v1.1 完全一致（零行为变化，opt-in 惯例延续） | 单元 | P0 |
-| T04 | AC1.3 | 负：用户拒绝 AI 提议的路线——不得写入 route 字段、不得进入分级后的简化流程；再次提议必须重新走确认 | 单元 | P0 |
+| T01 | AC1.1 | 正：新 intent 接入，AI 按规模提议 express，人确认后 state.json 写入 route=express 且 history 追加一条路由决策记录（R2 修订：响应 N5——route 提议/确认/写入是 prompt 层，T50 已覆盖闭环，层级 单元→E2E（需人工）/流程评审） | E2E（需人工）/流程评审 | P0 |
+| T02 | AC1.1 | 正：大规模输入提议 classic，确认后写入 route=classic；两条路线的写入结构一致（R2 修订：响应 N5——同 T01，prompt 层场景降级 E2E（需人工）/流程评审） | E2E（需人工）/流程评审 | P1 |
+| T03 | AC1.4（R1 修订：响应 M2——存量零行为属兼容域，原 AC1.2） | 负：存量 intent 的 state.json 无 route 字段——session-context / auto-route / guard-gates 三个 hook 的输出与 v1.1 一致（route/testBaseline 相关行为零变化，opt-in 惯例延续；guard-gates R4 preserveKeys 扩展对存量 intent 同样生效：漏写既有键的覆写被 deny 是有意的强化，不计入行为变化）（R2 修订：响应 N7(dev)——无条件"完全一致"全等断言收口，为 R4 preserveKeys 有意强化留出前提） | 单元 | P0 |
+| T04 | AC1.3 | 负：用户拒绝 AI 提议的路线——不得写入 route 字段、不得进入分级后的简化流程；再次提议必须重新走确认（R2 修订：响应 N5——拒绝/再确认是会话交互，prompt 层场景降级 E2E（需人工）/流程评审，T50 已覆盖） | E2E（需人工）/流程评审 | P0 |
 | T05 | AC1.2（R1 修订：响应 M2——express 守卫语义属裁剪域，原 AC1.4） | 负：route=express 生效时，guard-gates 的回执门控（R3 无回执 DENY / 过期回执 DENY）与 TDD 锁（R2 锁内测试文件 DENY）仍然全部拦截——express 不削弱任何守卫 | 单元 | P0 |
 | T06 | AC1.6（R1 修订：响应 M2 后续回填——route 非法值兜底语义已由 pm R1 落 AC1.6，原 AC1.4，"待回填"标注删除） | 负：route 字段为非法值/错误类型（如 `"route": "turbo"`、`"route": 1`）——按 classic 兜底或忽略该字段，hook 不崩溃、不 fail-open | 单元 | P1 |
 | T07 | AC1.7（R1 修订：响应 M2 后续回填——route 变更语义已由 pm R1 落 AC1.7（express→classic 单向、gate1 批准前、人类裁决留痕），原 AC1.4，"待回填"标注删除） | 负：路线中途变更（express→classic）——state.json 的 R4 history 乐观锁与 R6 Edit 拒绝语义不变，变更须留痕 | 单元 | P2 |
 | T08 | AC1.5 | 负：`autoRouting=false` / `config.json` 缺失 / JSON 畸形三类配置——A1 接入不注入路由提议、不弹路线确认，state.json 不含 route 字段，流程与 v1.1 行为完全一致 | 单元 | P0 |
 | T10 | AC2.1 | 正：Construction 第 0 步执行约定测试命令并记录基线（total/pass/fail + 时间戳）到约定工件位置，格式可被后续比对机器读取（R1 修订：响应 B3——层级 单元→E2E（需人工）/流程评审，prompt 层无被测单元，经 T50 smoke + 落盘核验兑现；"格式可被机器读取"的具体断言待 architect R1 钉死验证命令与计数解析口径（M7）后细化） | E2E（需人工）/流程评审 | P0 |
 | T11 | AC2.2 | 正：变更后重跑并 diff 基线——新出现的失败标记为回归；基线中已存在的失败不标记为回归（R1 修订：响应 B3——层级 单元→E2E（需人工）/流程评审，经 T50 smoke + 落盘核验兑现） | E2E（需人工）/流程评审 | P0 |
-| T12 | AC2.1（R1 修订：响应 m15——记录健壮性归 AC2.1，原 AC2.3） | 负：基线记录时测试命令本身失败（非零退出 / 命令不存在 / 超时）——显式记录"基线不可用"并告警，不得静默当作 0 fail 通过（R1 修订：响应 B3 层级降级；testBaseline schema 的"记录失败"表示待 architect R1 落定） | E2E（需人工）/流程评审 | P0 |
+| T12 | AC2.1（R1 修订：响应 m15——记录健壮性归 AC2.1，原 AC2.3） | 负：基线记录时测试命令本身失败（非零退出 / 命令不存在 / 超时）——显式记录"基线不可用"并告警，不得静默当作 0 fail 通过（R1 修订：响应 B3 层级降级；R2 修订：响应 N6 收尾回填——schema 已由 architect R2 落定：`unavailable: true` + 计数键置 null（architecture.md 数据模型），断言按此编写） | E2E（需人工）/流程评审 | P0 |
 | T13 | AC2.3 | 负：比对时基线文件缺失或损坏——显式报错，不得视为"全部通过、无回归"（R1 修订：响应 B3——层级降级，经 T50 smoke + 落盘核验兑现） | E2E（需人工）/流程评审 | P1 |
 | T14 | AC2.2 | 负：基线与重跑之间测试总数变化（新增用例）——计数口径明确：新增 pass 不算回归，新增 fail 算回归，总数变化本身有说明（R1 修订：响应 B3——层级降级） | E2E（需人工）/流程评审 | P1 |
 | T15 | AC2.4 | 负：存量 intent（无基线工件）执行 resume——不要求回填基线、不弹确认、不阻断，续跑行为与现状一致（R1 修订：响应 B3——层级降级，经 T50/T51 smoke 兑现） | E2E（需人工）/流程评审 | P0 |
@@ -30,32 +30,32 @@
 | T32 | AC4.3 | 负：测试点映射了 PRD 中不存在的 AC 编号（陈旧映射）——检出并告警，防止"假覆盖" | 单元 | P1 |
 | T33 | AC4.1 | 负：AC 编号重复或格式非法——检出，不误判为已覆盖 | 单元 | P2 |
 | T34 | AC4.4 | 负：存量 intent 已处于 construction 或更后阶段 resume——不强制补跑 AC 覆盖校验；该校验仅约束此后新建 / 修订的 Inception 工件 | 单元 | P1 |
-| T40 | AC1.2 / 全局 | 负（回归底线）：guard-gates 28 场景 + auto-route 23 场景全绿——F1-F4 任何改动不得破坏存量守卫与路由语义 | 集成 | P0 |
+| T40 | AC1.2 / 全局 | 负（回归底线）：guard-gates 28 + auto-route 23 + ac-coverage（F4 独立套件，15 场景，architect R2 已裁定归属）全绿——F1-F4 任何改动不得破坏存量守卫与路由语义（R2 修订：响应 N10——删除会失真的固定"28"总数表述，28+23 保留为存量历史基线引用，新增 ac-coverage 套件单独表述）（R2 修订：响应 N6 收尾回填——场景数 15 与独立套件归属已由 architect R2 裁定） | 集成 | P0 |
 | T41 | AC1.1–AC4.4（全量回归） | 正：check-plugin.sh 纳入全部新增测试套件（R1 修订：响应 B3——仅 F1/F4 机制层套件，F2/F3 无套件可纳）；plugin-tests.yml CI 同步执行（新套件进 §2 回归段） | 集成 | P1 |
 | T42 | AC4.2 | 正：F4 覆盖校验接入真实链路（guard-gates.mjs 在 phase→gate1 转移时机械校验），对本仓库 docs/aidlc/next-phase/ 工件（首个 dogfood 对象）跑通，BLOCKER 真实阻断流程（R1 修订：响应 m16——以夹具副本演练真实阻断，活跃 intent state 已 gate1，不可重放） | 集成 | P1 |
 | T50 | AC1.1–AC4.4（全量回归） | 正：真实会话 smoke——新 intent 走 规模提议→人确认→基线记录→影响面→AC 覆盖校验→gate1 全闭环（R1 修订：响应 B3——P1 升 P0，F2/F3 降级后本 smoke 为其 P0 交付门槛载体；响应 m17——依赖 OQ1-OQ9 裁决，E2E 脚本待裁决后细化） | E2E（需人工） | P0 |
 | T51 | AC1.4（R1 修订：响应 M2——存量零行为属兼容域，原 AC1.2） | 负：真实会话打开存量 intent 续跑——无路由提议打扰、守卫行为与升级前一致（响应 m17——依赖 OQ1-OQ9 裁决） | E2E（需人工） | P2 |
-| T52 | AC4.3 | 负：验收标准小节内的示例性 AC 字样（如"例如 AC99""参见 AC1.1"出现在 AC 正文/说明中）被误提取为 P 集合成员——产生幻影 AC 或假覆盖，提取规格须排除（R1 修订：响应 M5 新增；依赖 architect R1 规格落定后细化断言） | 单元 | P0 |
+| T52 | AC4.3 | 负：T 集合仅从测试点清单表"映射 AC"列单元格逐 token 提取——映射列之外的正文示例字样（如 T52 行自身说明中的 AC99）不得产生 T 证据（否则 prose 提及即算映射证据、产生假覆盖），映射列内逗号/顿号/空格/斜杠分隔的多 token 格逐 token 合法入 T（R1 修订：响应 M5 新增；R2 修订：响应 N1——按编排者已裁决规格直接断言，规格本轮已定，删除"依赖 architect R1 规格落定后细化"挂起语） | 单元 | P0 |
 | T53 | AC4.3 | 负：非验收标准正文提及 AC 编号（如 test-strategy 缺口小节引用"AC4.2"）被纳入 P 提取范围——假阴性/假阳性；提取须限定验收标准小节（`^## 验收标准` 前缀匹配方向，R1 修订：响应 M5 新增；依赖 architect R1 规格落定后细化断言） | 单元 | P0 |
-| T54 | AC4.1 / AC4.3 | 负：范围词单元格（如"AC1.1–AC4.4"跨号区间）——只提端点、不得展开为全区间幻影覆盖；端点漏提亦须检出（R1 修订：响应 M5 新增；依赖 architect R1 规格落定后细化断言） | 单元 | P1 |
+| T54 | AC4.1 / AC4.3 | 负：映射列内含区间连接符（– — ~ ～ .. … 至 到、字母数字相邻的 -）的格（如 AC1.1-AC4.4 半角连字符形态）整格剔除、两端不入 T（宁可少算交人工，不得展开为区间幻影覆盖）；/ 分隔纯多 token 格合法逐 token 入 T（R1 修订：响应 M5 新增；R2 修订：响应 N3——方向对齐架构 L103"整格剔除、宁可少算"，删除"端点漏提亦须检出"的相反期望） | 单元 | P1 |
 | T55 | AC4.2 | 负：先写 state.json(phase=gate1) 后补 Inception 工件的顺序绕过——校验须在转移点取得完整工件快照或封堵该时序，不得因先写 state 整体跳过校验（R1 修订：响应 M5 新增；依赖 architect R1 规格落定后细化断言） | 单元 | P0 |
 | T56 | AC4.2 / AC4.4 | 负：brand-new intent（guard-gates.mjs:66 早退）与损坏 intent 修复（:69-73）两条早退路径绕过 F4 校验——按 R1 规格封堵或显式披露，不得静默放行（R1 修订：响应 M5 新增；依赖 architect R1 规格落定后细化断言） | 单元 | P1 |
 | T57 | AC2.5 | 正：验证命令以 plan.md 声明段为规范来源；无声明时 Sprint Planning 第 0 步向人类询问，不得擅自猜测命令（R1 修订：响应 pm 新增 AC2.5） | E2E（需人工）/流程评审 | P1 |
-| T58 | AC5.1 | 正：README 与 GitHub Pages 反映 F1-F4 新机制（分级路由交互、测试基线、影响面列、AC 覆盖校验）且升级指引含存量 intent 兼容说明（R1 修订：响应 pm 新增 AC5.1） | E2E（需人工）/流程评审 | P2 |
+| T58 | AC5.1 | 正：README 与 GitHub Pages 反映 F1-F4 新机制——含四项能力（规模分级路由 / 测试基线 / 影响面分析 / AC↔测试点覆盖校验）的简要说明或明确的"新增 / 实验"标注、不存在与实现矛盾的过时描述、本次文档改动不改变任何 hook / skill 运行时行为（零行为变化标注）（R1 修订：响应 pm 新增 AC5.1；R2 修订：响应 m-N4——删除超出 AC5.1 字面的"升级指引含存量 intent 兼容说明"，断言收口至 AC5.1 原文） | E2E（需人工）/流程评审 | P2 |
 
 ## 分层策略
 
-- **单元**：（R1 修订：响应 B3——原"F1–F4 全部新逻辑落地为 .mjs"表述不实，机制层仅 F1/F4）仅 F1（route-profile）与 F4（ac-coverage）具备 `.mjs` 机制层被测单元，测试沿用现有夹具风格——`os.tmpdir()` 临时目录 + `cp.execSync` 子进程喂 stdin JSON、断言 stdout/exit code（参照 guard-gates.test.mjs / auto-route.test.mjs）。新增套件：`scripts/tests/route-profile.test.mjs`（F1）、`ac-coverage.test.mjs`（F4，含 T30-T34、T52-T56）。**不测**：LLM 提议质量与措辞（属 prompt 工程，走人工评审）；F2/F3（prompt 层纪律，无机制被测单元，不设单元测试——见下）；真实大仓库扫描（F3 降级后该场景随 T21 归 smoke/流程评审，用夹具替代）。
+- **单元**：（R1 修订：响应 B3——原"F1–F4 全部新逻辑落地为 .mjs"表述不实，机制层仅 F1/F4）仅 F1（route-profile）与 F4（ac-coverage）具备 `.mjs` 机制层被测单元，测试沿用现有夹具风格——`os.tmpdir()` 临时目录 + `cp.execSync` 子进程喂 stdin JSON、断言 stdout/exit code（参照 guard-gates.test.mjs / auto-route.test.mjs）。新增套件：`scripts/tests/route-profile.test.mjs`（F1，R2 修订：响应 N5——机械断言只保留回显语义 T03/T06/T08）、`ac-coverage.test.mjs`（F4，含 T30-T34、T52-T56）。**不测**：LLM 提议质量与措辞（属 prompt 工程，走人工评审）；F2/F3（prompt 层纪律，无机制被测单元，不设单元测试——见下）；真实大仓库扫描（F3 降级后该场景随 T21 归 smoke/流程评审，用夹具替代）。
 - **集成**：check-plugin.sh 扩展跑 F1/F4 新套件并保留存量两套件（R1 修订：响应 B3——F2/F3 无套件可纳）；plugin-tests.yml 的 CI 步骤同步纳入；F4 校验以夹具副本做 dogfood 首跑（T42，响应 m16——活跃 intent state 已 gate1 不可重放）。**不测**：hook 内部分支（单元层已覆盖），集成层只验链路与退出码；F2/F3 的编排者行为（非机制，不可集成测）。
-- **E2E（需人工）/流程评审**：（R1 修订：响应 B3——本层为 F2/F3 的唯一真实验证层）F2/F3 为 prompt 层纪律，无机制层被测单元；其验证 = 真实会话 smoke（覆盖记录/对比/降级路径）+ 门审流程检查。被测物 = 编排者执行步骤 + state.json/plan.md 的落盘结果核验（`state.json.testBaseline` 字段、plan.md 影响面列与降级注明）。归此层：T10-T15、T20-T24、T50/T51。CI 无法覆盖真实会话，依赖人工执行并记录结果；E2E 脚本依赖 OQ1-OQ9 裁决后细化（m17）。
-- **P0 交付门槛**（R1 修订：响应 B3）：挂在 F1/F4 机械测试（T01-T08、T30-T34、T40、T42、T52-T56）与 T50 E2E smoke 上；T10-T15/T20-T24 中保留的 P0 标注仅表示风险等级（核心正确性/安全），其兑现经 T50 smoke 与门审流程检查，不存在机械断言。
+- **E2E（需人工）/流程评审**：（R1 修订：响应 B3——本层为 F2/F3 的唯一真实验证层）F2/F3 为 prompt 层纪律，无机制层被测单元；其验证 = 真实会话 smoke（覆盖记录/对比/降级路径）+ 门审流程检查。被测物 = 编排者执行步骤 + state.json/plan.md 的落盘结果核验（`state.json.testBaseline` 字段、plan.md 影响面列与降级注明）。归此层：T10-T15、T20-T24、T50/T51（R2 修订：响应 N5——增补 T01/T02/T04，F1 route 提议/确认/拒绝/写入为 prompt 层场景，闭环经 T50 兑现）。CI 无法覆盖真实会话，依赖人工执行并记录结果；E2E 脚本依赖 OQ1-OQ9 裁决后细化（m17）。
+- **P0 交付门槛**（R1 修订：响应 B3；R2 修订：响应 N5——"F1/F4 机械测试"收口为"F1 回显类 + F4 全部"，T01/T02/T04 降级退出机械门槛）：挂在 F1 回显类 + F4 全部机械测试（T03/T06/T08、T30-T34、T40、T42、T52-T56）与 T50 E2E smoke 上；T01/T02/T04、T10-T15/T20-T24 中保留的 P0 标注仅表示风险等级（核心正确性/安全），其兑现经 T50 smoke 与门审流程检查，不存在机械断言。
 
 ## 缺口与开放问题
 
 ### 已裁决（对齐拍同步，原开放项关闭）
 
-- [x] **基线存储位置**：已裁决——基线存 `state.json.testBaseline`（单一事实源），T10/T13 实现形态以此为准。（R1 注：testBaseline schema 的"记录失败"表示待 architect R1 落定，见 m15/T12；M6 覆写保护与 resume 对账规格同待 architect R1。）
-- [x] **F4 校验的强制点**：已裁决——guard-gates.mjs 在 phase→gate1 转移时机械校验（缺口 deny / 不可解析 allow），T42 按此编写。（R1 注：提取规格正由 architect 按 B1 重写——子编号/扁平双粒度、范围词单元格、幻影排除、顺序绕过与两条早退路径封堵；T42/T52-T56 均 按"规格待复审"表述，本策略不自行发明正则细节。）
+- [x] **基线存储位置**：已裁决——基线存 `state.json.testBaseline`（单一事实源），T10/T13 实现形态以此为准。（R1 注：testBaseline schema 的"记录失败"表示待 architect R1 落定，见 m15/T12；M6 覆写保护与 resume 对账规格同待 architect R1。R2 修订：响应 N6 收尾回填——schema 已落定（unavailable 标记），见 T12。）
+- [x] **F4 校验的强制点**：已裁决——guard-gates.mjs 在 phase→gate1 转移时机械校验（缺口 deny / 不可解析 allow），T42 按此编写。（R1 注：提取规格正由 architect 按 B1 重写——子编号/扁平双粒度、范围词单元格、幻影排除、顺序绕过与两条早退路径封堵；T42/T53/T55/T56 仍按"规格待复审"表述，本策略不自行发明正则细节。R2 修订：响应 N1/N3——T 集合提取规格已由编排者裁决：仅从测试点清单表"映射 AC"列单元格逐 token 提取（逗号/顿号/空格/斜杠分隔各 token 合法入 T）、含区间连接符的格整格剔除、映射列外正文一律不算证据；T52/T54 已按裁决直接断言。）
 
 ### 开放问题（保留待裁决）
 
