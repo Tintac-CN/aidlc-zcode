@@ -1,16 +1,17 @@
 {
   "slug": "next-phase",
   "intent": "根据调研结果，开始推进插件到下一个阶段",
-  "phase": "gate1",
+  "phase": "inception",
   "gates": { "gate1": "pending", "gate2": "pending" },
   "tddLock": false,
   "tddLockPaths": [],
   "tddLockOverride": null,
-  "updatedAt": "2026-10-14T16:05:00Z",
+  "updatedAt": "2026-10-14T17:20:00Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
     { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
     { "at": "2026-10-14T15:10:00Z", "from": "gate1", "to": "inception", "why": "human rejected at gate1 (GATE-REJECTED gate1 2026-10-14 in decisions.md): 3 BLOCKER / 7 MAJOR / 18 MINOR per reviews/gate1-ai.md; revision round 1, named roles pm/architect/qa only" },
-    { "at": "2026-10-14T16:05:00Z", "from": "inception", "to": "gate1", "why": "revision round 1 complete: B1 extraction spec rebuilt (dual-granularity/exclusions/bypass closure), B2 red-line reworded pending ratification, B3 honestly re-leveled; alignment round 2: 21 ACs bidirectionally closed, zero phantoms; gate1 reset pending for re-review" }
+    { "at": "2026-10-14T16:05:00Z", "from": "inception", "to": "gate1", "why": "revision round 1 complete: B1 extraction spec rebuilt (dual-granularity/exclusions/bypass closure), B2 red-line reworded pending ratification, B3 honestly re-leveled; alignment round 2: 21 ACs bidirectionally closed, zero phantoms; gate1 reset pending for re-review" },
+    { "at": "2026-10-14T17:20:00Z", "from": "gate1", "to": "inception", "why": "re-review (reviews/gate1-ai-r2.md): prior 3 BLOCKERs resolved, but revision collisions produced 1 new BLOCKER + 7 MAJOR (one-line alignment level); user unanswered at re-review form, orchestrator proceeds conservatively with R2 minimal revision per decisions.md 2026-10-14 record; no gate approval ever granted" }
   ]
 }
