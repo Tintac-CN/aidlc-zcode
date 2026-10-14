@@ -88,3 +88,12 @@ GATE-APPROVED gate1 2026-10-15
 - 编排者复核：属实。实现其余全部达标：ac-coverage 48/49、route-profile 15/15、guard-gates 28/28、auto-route 23/23、本 intent 工件 dogfood（phase→gate1 转移）plain allow（P=21/T=21）。U4 文档触点 1-11 已并行落地并提交（40f17f7）。
 - 待人类裁决：① 解锁批准（/aidlc:unlock-tests 语义，理由如上）；② 修复方案 A（pk5 新内容补全五保留键、仅去 tddLockOverride——场景变为"丢 tddLockOverride 不拦"，与 pk1 形成边界对照，编排者推荐）或 B（pk5 盘上改 legacy 状态）。解锁→修夹具→49/49→重新上锁→补提交 U2。
 - 保守路径（人类未裁决期间）：U2 实现已提交但标记 blocked(pk5-unlock)，unitStatus 如实记录；U3/U5 等不受阻工作继续；gate2 前必须回此决策。
+
+## 2026-10-15 TDD 解锁裁决（pk5 夹具修复）
+
+人类裁决（用户回复原文）：**"选择A方案"**——批准解锁（/aidlc:unlock-tests 语义）并按方案 A 修复 pk5：新内容补全五个保留键（route/testBaseline/unitStatus/tddLockPaths，仅去 tddLockOverride），场景语义为"丢 tddLockOverride 不拦"，与 pk1（丢保留键 → deny）形成边界对照。
+
+执行记录：
+1. tddLockOverride = {by: "human", at: 2026-10-15, reason: "pk5 夹具编写笔误（盘上状态误展开 PKBASE）与已批准架构决策 #11 矛盾，字节级证据经编排者复核成立；批准解锁按方案 A 修复夹具"}（tddLock 保持 true）。
+2. 修复 scripts/tests/ac-coverage.test.mjs pk5 → 验证 ac-coverage 49/49 + 四套件全绿 + dogfood。
+3. 修复完成后清除 override（重新上锁），补提交，U2 = done。
