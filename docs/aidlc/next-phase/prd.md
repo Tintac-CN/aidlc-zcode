@@ -1,7 +1,8 @@
 # PRD: next-phase
 
 > 产出者：pm　日期：2026-10-14　来源：intent.md
-> R1 修订（2026-10-14）：响应 reviews/gate1-ai.md 打回意见 B2 / M1 / M3 / M7 及 MINOR m2 / m3 / m5 / m6；依据 decisions.md 2026-10-14 Gate#1 审批的修订指令。修订处以"（R1 修订：响应 Xx）"行内标注。既有 AC1.1–AC4.4 编号与语义保持不变（qa 映射引用依赖），新增 AC1.6 / AC2.5 / AC5.1。
+> R1 修订（2026-10-14）：响应 reviews/gate1-ai.md 打回意见 B2 / M1 / M3 / M7 及 MINOR m2 / m3 / m5 / m6；依据 decisions.md 2026-10-14 Gate#1 审批的修订指令。修订处以"（R1 修订：响应 Xx）"行内标注。既有 AC 中 AC1.2 / AC2.3 / AC4.4 含 R1 行内修订，其余既有 AC 编号与语义未动（qa 映射引用依赖）；新增 AC1.6 / AC1.7 / AC2.5 / AC5.1。（R2 修订：响应 NM-4——修订记录补列 AC1.7，"编号语义不变"声明收口为准确表述。）
+> R2 修订（2026-10-14）：响应 reviews/gate1-ai-r2.md 点名意见 N2 / NM-4 / NM-7 / N14 / m-N1 / m-N2（编排者裁决指令逐条执行的极小修订轮）；修订处以"（R2 修订：响应 Xx）"行内标注。
 
 ## 用户故事
 | # | 角色 | 目标 | 价值 | 溯源（intent.md） |
@@ -21,8 +22,8 @@
 - **AC1.3**（U1，负路径）：Given 同一个接入场景，When 人类在 AskUserQuestion 中拒绝 AI 提议的路线并选择另一档（或选择不进流程），Then 编排者按人类选择执行；选择不进流程时不建任何文件、直接答复需求。
 - **AC1.4**（U5，负路径）：Given 一个 v1.0 / v1.1 创建、`state.json` 不含路线字段的存量 intent，When 编排者对其执行 `/aidlc:status` 或 `/aidlc:resume`，Then 流程按既有语义续跑，不强制补写路线字段、不中断、不弹新确认；route 缺省视为 classic 等价的完整流程（具体缺省语义待开放问题 OQ1 裁决）。
 - **AC1.5**（U5，负路径）：Given `autoRouting` 为 false 或 `config.json` 缺失 / 畸形，When 用户提自然语言需求，Then 不注入路由、不弹路线确认，与现状行为完全一致。
-- **AC1.6**（U5，负路径）：Given 一个 intent 的 `state.json` 中 `route` 字段存在但取值在合法枚举 {classic, express} 之外（如 "bugfix" 或类型错误），When 编排者读取该字段决定流程形态、或 auto-route.mjs 摘要行回显 route，Then 一律按缺失处理：流程视为 `classic` 全量执行，不中断、不弹新确认；回显按生效语义展示 `route=classic`，不原样透传非法值。（R1 修订：新增 AC，响应 m2——route 非法值兜底此前在 PRD 无 AC 背书；语义来源 architecture.md 数据模型"`route`：缺失/非法值一律视为 `classic`"。）
-- **AC1.7**（U1，负路径）：Given 一个 route=express 且 gate1 尚未批准的 intent，When 人类裁决升级路线为 classic，Then 编排者更新 state.json 的 route 字段（Write 整体覆写、history 追加留痕），裁决逐字记入 decisions.md；classic→express 的降级方向被拒绝；gate1 批准后 route 不再变更。（R1 修订：响应 M2/M7——语义来源 architecture.md 决策 #9，供 T07 映射）
+- **AC1.6**（U5，负路径）：Given 一个 intent 的 `state.json` 中 `route` 字段存在但取值在合法枚举 {classic, express} 之外（如 "bugfix" 或类型错误），When 编排者读取该字段决定流程形态、或 auto-route.mjs 摘要行回显 route，Then 一律按缺失处理：流程视为 `classic` 全量执行，不中断、不弹新确认；回显采用架构决策 #12 的原值透传方案：`route=<原值>(invalid→classic)`（保留脏数据可观测性，直接改写显示值会掩盖非法输入）；生效语义仍为按 classic 兜底。（R1 修订：新增 AC，响应 m2——route 非法值兜底此前在 PRD 无 AC 背书；语义来源 architecture.md 数据模型"`route`：缺失/非法值一律视为 `classic`"。）（R2 修订：响应 N2——回显语义统一到 architecture.md 决策 #12 的原值透传方案，消除与架构的互斥表述及 T06 断言二义；生效兜底语义不变。）
+- **AC1.7**（U1，负路径）：Given 一个 route=express 且 gate1 尚未批准的 intent，When 人类裁决升级路线为 classic，Then 编排者更新 state.json 的 route 字段（Write 整体覆写、history 追加留痕），裁决逐字记入 decisions.md；classic→express 的降级方向被拒绝；gate1 批准后 route 不再变更（其负向分支——降级方向被拒绝、批准后不可变更——由流程评审兜底验证，见 test-strategy T07 域）。（R1 修订：响应 M2/M7——语义来源 architecture.md 决策 #9，供 T07 映射）（R2 修订：响应 NM-7 / N14——行内补负分支验证指引，不新增 AC。）
 
 ### F2 测试基线（AC2.x）
 - **AC2.1**（U2）：Given gate1=approved 的 intent 进入 Construction，When 编排者执行 Sprint Planning（第 0 步），Then 在派发任何 dev 泳道之前运行既有测试命令并记录基线（总数 / pass / fail，含命令与输出摘要），基线落盘为工件并提交。
@@ -55,11 +56,11 @@
 - 多 intent 并行支持、`/aidlc:on` / `/aidlc:off` 交互形态变更。
 
 ## 开放问题（需人类裁决）
-- [ ] OQ1：路线字段缺省语义与 express 裁剪清单的追认——存量 intent 无 route 字段时缺省按 classic 处理是否可接受？（R1 修订：响应 M1——裁剪清单要点已作为提议默认并入 AC1.2 正文，来源 architecture.md 关键决策 #3，本 OQ 仅保留对该清单的人类追认，及 express 路线 Gate#1 的执行形态确认（合并评审 / 精简评审）。）
+- [ ] OQ1：路线字段缺省语义与 express 裁剪清单的追认——存量 intent 无 route 字段时缺省按 classic 处理是否可接受？（R1 修订：响应 M1——裁剪清单要点已作为提议默认并入 AC1.2 正文，来源 architecture.md 关键决策 #3，本 OQ 仅保留对该清单的人类追认，及 express 路线 Gate#1 的执行形态确认（含 verifier 派发默认值：high 必派/low-med 可省；retro.md 人类可选）。）（R2 修订：响应 m-N2——architecture.md 登记的 verifier 派发默认值与 retro.md 人类可选两个子项显式纳入本 OQ 枚举。）
 - [ ] OQ2：F2 测试基线缺失时的降级语义——（R1 修订：响应 M1）"不虚构基线、显式标注无基线对照、告警"已并入 AC2.3 正文作为提议默认；本 OQ 仅保留：缺失时是阻断进入 gate2，还是允许人类书面豁免继续（类似 tddLockOverride 的先例）？豁免留痕格式需定义。
 - [ ] OQ3：F3 影响面分级（low / med / high）的判定规则——按受影响文件数 / 消费方数阈值，还是按人类判断 + AI 建议？architect 需依据裁决制定分级标准。
 - [ ] OQ4：F4 校验的适用时机——仅 Inception 对齐拍，还是 Gate#1 复审 / scope 扩展（A2）导致 PRD 修订时也重跑？（本 PRD 默认仅 Inception 对齐拍与修订回填后重跑，扩展场景待裁决。）
-- [ ] OQ5：F1 中"轻量 / 重型"的规模判定标准——由编排者按什么规则提议路线（改动文件数预估 / 需求类型关键词）？误判时人类改选是否记为流程学习数据？
+- [ ] OQ5：F1 中"轻量 / 重型"的规模判定标准——由编排者按什么规则提议路线（改动文件数预估 / 需求类型关键词）？误判时人类改选是否记为流程学习数据？express 路线下 AC1.1 的"3~6 条拆分预览"是否放宽为 1~3 条（与 plan.md 允许单 unit 的张力），随本 OQ 一并裁决？（R2 修订：响应 m-N1——登记该张力；AC1.1 正文未动，拆分预览条数属语义变更，须随本 OQ 由人类裁决。）
 - [ ] OQ6：F2 基线命令**执行失败**（非用例失败：命令崩溃、环境缺依赖、超时等导致基线无法取得）时的语义——阻断 Construction 派发直至环境修复，还是告警后继续并记录"基线不可得"？（R1 修订：新增，响应 M3——与 AC2.3 的"基线未记录"是两种不同缺失：AC2.3 是该记未记，本条是想记记不了。）gate1-ai.md 指出此项未决将使相关测试点断言伪化。
 - [ ] OQ7：F3 影响面扫描在巨型仓库的性能预算——扫描的文件数 / 引用方规模上限与时限是多少？超限时降级策略为何（仅扫描直接引用方 / 标 `unknown` 计入缺口与开放问题）？（R1 修订：新增，响应 M3。）
 - [ ] OQ8：F2 基线比对中 flaky 测试的口径——基线中已知的 flaky 用例在交付验证时偶发失败，是否计为回归 BLOCKER？需裁决处理方式（重跑 N 次 / 用例白名单 / 计数容忍）及留痕格式。（R1 修订：新增，响应 M3。）
