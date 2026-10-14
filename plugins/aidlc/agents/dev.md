@@ -16,7 +16,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 ## 职责
 
-**Construction**（读 `plan.md`+`units/<n>.md`+`prd.md`+`architecture.md`）：
+**Construction**（读 `plan.md`+`units/<n>.md`+`prd.md`+`architecture.md`；**（U4：响应触点 3）**express 路线（按 `state.json.route`，缺失/非法=classic）无 architecture.md，语义对齐以 prd.md 内联小节为准）：
 1. 写失败测试并运行确认失败
 2. 实现至测试通过
 3. 跑全量验证命令

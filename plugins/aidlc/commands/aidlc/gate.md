@@ -8,8 +8,8 @@ skills: [aidlc, party-review]
 
 - `phase = gate1` → 执行 Gate#1
 - `phase = gate2` → 执行 Gate#2
-- `phase = inception` 且三工件齐 → 视为推进中断，先补齐收尾（提交工件、phase 置 gate1）再执行 Gate#1
-- `phase = inception` 且工件未齐 → 拒绝执行，提示先 `/aidlc:resume` 对账
+- `phase = inception` 且工件齐（判据按 `state.json.route`：classic 三件——prd.md/architecture.md/test-strategy.md；express 两件——prd.md/test-strategy.md；route 缺失或非法值一律按 classic）（U4：响应触点 1）→ 视为推进中断，先补齐收尾（提交工件、phase 置 gate1）再执行 Gate#1
+- `phase = inception` 且工件未齐（同一 route 判据）→ 拒绝执行，提示先 `/aidlc:resume` 对账
 - `phase = construction`（gate2 前置未满足）→ 提示先完成 Construction
 - `phase = operations / done / archived` → 拒绝执行（门已过或已完结/终止，不得重写 reviews/ 历史文件）
 - 打回后重进门：`gates.gateN = pending`（approved/rejected 是历史记录，重审以新一轮为准）

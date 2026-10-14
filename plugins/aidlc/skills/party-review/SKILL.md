@@ -9,14 +9,14 @@ description: AI cross-review orchestration for AIDLC gates. Use when a review ga
 
 ## 流程
 
-1. **确定评审对象**：从活跃 intent 的 `state.json` 判断当前门（gate1 → 评审 `prd.md`/`architecture.md`/`test-strategy.md`；gate2 → 评审代码 diff、`plan.md` 完成度、测试结果）。
+1. **确定评审对象**：从活跃 intent 的 `state.json` 判断当前门。gate1 → 评审集合**按 route 取**（U4：响应触点 2）：`route=classic`（或 route 缺失/非法值，按 classic 兜底）→ `prd.md`/`architecture.md`/`test-strategy.md` 三件；`route=express` → `prd.md`（含内联语义对齐小节）与 `test-strategy.md` 两件（无 architecture.md）。扇出前由编排者读 route 决定集合，本 skill 文本只写分支规则。gate2 → 评审代码 diff、`plan.md` 完成度、测试结果。
 2. **并行扇出**（Agent 工具，一次消息多个调用）——**派 reviewer 系列角色**（`reviewer-pm`/`reviewer-architect`/`reviewer-qa`/`reviewer-dev`），它们**没有 Edit/Write 工具**（只读是机制保证，不靠 prompt）；**不要派生产角色**（pm/architect/qa/dev 带 Write，是产出用的）：
    - `reviewer-pm`：需求覆盖 / AC 可测性 / 边界场景遗漏 / 非目标边界。
    - `reviewer-architect`：三方语义一致性 / 数据模型支撑 / 错误处理 / 安全 / brownfield 一致性。
    - `reviewer-qa`：AC 覆盖与编号核对 / 负路径 / P0 充分性 / 断言与设计一致。
    - `reviewer-dev`：可实现性 / 隐藏依赖 / 技术债 / 测试可写性。
    - gate2 时另加 `verifier`：新鲜上下文对照 `plan.md` 逐 unit 核对实际 diff（含计划外文件双查）。
-   - 调度消息仍按 SKILL §5 契约五要素（intent 路径/读清单/输出协议/检查清单来源/完成判据），评审的"输出"是回报文本（`REVIEWER-<ROLE>-DONE <B>/<M>/<m>`），不写文件。
+   - 调度消息仍按 SKILL §5 契约五要素（intent 路径/读清单/输出协议/检查清单来源/完成判据），评审的"输出"是回报文本（`REVIEWER-<ROLE>-DONE <B>/<M>/<m>`），不写文件。评审读清单按第 1 步确定的 route 集合发放。
 3. **汇总**：把各角色发现合并去重，按严重度排序（BLOCKER / MAJOR / MINOR），写入 `reviews/gateN-ai.md`（由编排者落盘，reviewer 不写文件），格式：
 
 ```markdown
