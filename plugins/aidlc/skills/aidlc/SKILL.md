@@ -11,7 +11,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 
 本插件的机制强制范围如下，**之外的约束都是提示词（prompt），可能被模型违反**：
 
-- **guard-gates hook（强制 deny）**：① Gate#1 未通过时禁止写 `plan.md`/`units/`；② TDD 锁生效时禁止改锁定范围内的测试文件（除非有 `tddLockOverride` 人类解锁记录；范围见 §2 `tddLockPaths`）；③ `state.json` 里把门置为 `approved` 前必须有 `decisions.md` 的人类审批回执，且**打回（GATE-REJECTED）后旧回执作废，须新回执**；④ `state.json` 整体覆写不得丢 history（乐观锁）；⑤ `decisions.md` 只追加（前缀校验）；⑥ **`state.json`/`decisions.md` 禁止 Edit**（old_string 可命中任意位置等于改写历史，一律走 Write）；⑦ intent 的 `state.json` 损坏时 fail-closed——除用 Write 修复该文件本身外全部拒绝。
+- **guard-gates hook（强制 deny）**：① Gate#1 未通过时禁止写 `plan.md`/`units/`；② TDD 锁生效时禁止改锁定范围内的测试文件（除非有 `tddLockOverride` 人类解锁记录；范围见 §2 `tddLockPaths`）；③ `state.json` 里把门置为 `approved` 前必须有 `decisions.md` 的人类审批回执，且**打回（GATE-REJECTED）后旧回执作废，须新回执**；④ `state.json` 整体覆写不得丢 history（乐观锁）；⑤ `decisions.md` 只追加（前缀校验）；⑥ **`state.json`/`decisions.md` 禁止 Edit**（old_string 可命中任意位置等于改写历史，一律走 Write）；⑦ intent 的 `state.json` 损坏时 fail-closed——除用 Write 修复该文件本身外全部拒绝；⑧ **（v1.2）F4 覆盖校验**：phase→gate1 转移时机械比对 prd 验收标准与 test-strategy 映射列的 AC 编号集合——缺口/幻影/工件缺失 deny，不可解析 allow+披露（见 §3 对齐拍机械校验语义）；⑨ **（v1.2）键保留校验**：整体覆写丢失既有 `route`/`testBaseline`/`unitStatus`/`tddLock`/`tddLockPaths` 键（或置 null）→ deny（值变更放行；见 §2 覆写保留）。
 - **guard-paths hook（强制 deny）**：仅拦截 **Edit/Write 工具**对 `.env`/密钥类路径的写入。**Bash 重定向、脚本间接写均可绕过**——它防手滑，不防恶意，不是安全边界。
 - **角色"常驻约束"（不发明需求/最小权限/不改测试等）是 prompt**：长上下文、用户催促、对抗输入都会稀释它。**门控处的人类复核是唯一可信兜底。**
 - **互审只读靠工具集+prompt 双保险**：reviewer 系列角色不带 Edit/Write 工具（Bash 仍可写文件，prompt 约束兜底）。
@@ -64,7 +64,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
   - `suites` 记基线时**参与统计的套件文件清单**——回归比对只覆盖该清单，基线后新增的套件不比对。
   - `failingTests`：可解析到用例粒度时填全量名单（FAIL 行去前缀后的整行文本）；无法解析则省略该键，退化为计数比较。
   - 验证命令执行失败（非零退出/命令不存在/超时）或输出不可解析 → `unavailable: true`：计数键与 `coverage` 置 `null`、`failingTests` 省略、`suites` **保留原清单**——显式表示"想记记不了"，**不得虚构 0 fail**。`coverage` 默认 `null`。
-  - **字段缺失 = 旧行为**：验证步骤退化为"验证命令通过"即满足；`/aidlc:status` 显示"无基线"。
+  - **字段缺失 = 旧行为**：验证步骤退化为"验证命令通过"即满足；`/aidlc:status` 显示"无基线"。**（v1.2 补，AC2.3）本 intent 应记未记的区分**：存量 intent 从无 `testBaseline`（上句降级，合法）；**本 intent 因故未在第 0 步记录（如中断恢复）或记录时命令失败（`unavailable: true`）→ 不得虚构、不得静默当作通过**——验证输出与交付结论必须显式标注"无基线对照"构成告警，是否放行归人类裁决（豁免逐字进 `decisions.md`，形态同 tddLockOverride 先例）。
 - **（U4：响应触点 12-§2）覆写保留（机制强制，键拦截值放行）**：guard-gates 对既有键 **`route` / `testBaseline` / `unitStatus` / `tddLock` / `tddLockPaths`** 做键保留校验——整体覆写丢失其中任一既有键（或置 `null`）→ **deny**（消息列出丢失键；修复 = 重读磁盘 state、完整保留后整体重写）。**值变更不拦截**：unitStatus per-unit 推进、gate1 批准前的 route 升级留痕、tddLockPaths 并集均为合法写路径。该校验与 history 乐观锁同模式；损坏修复路径不经此校验（覆盖洞由 §4 resume 对账披露兜底）。
 
 ## 3. 阶段协议
@@ -107,7 +107,7 @@ description: AI-DLC workflow orchestrator. Use when the user wants to start, res
 ### Construction（`/aidlc:construct`，前置 gate1=approved）
 
 1. **Sprint Planning**：拆 units → `plan.md` + `units/<n>.md`（提交）。
-   - **影响面扫描（F3）（U4：响应触点 12）**：逐 unit 用 Grep/Glob 扫描引用方（imports/consumers），结果写 plan.md Units 表"影响面"列——取值 `low | med | high（引用方 N） | unknown`；`unknown` = 扫描工具不可用或引用关系无法解析，计入 plan"缺口与开放问题"，**不得静默省略或猜测填 low**；`high` 的 unit 必须在"执行顺序"中说明拆分或排序理由。
+   - **影响面扫描（F3）（U4：响应触点 12）**：逐 unit 用 Grep/Glob 扫描引用方（imports/consumers），结果写 plan.md Units 表"影响面"列——取值 `low | med | high（引用方 N） | unknown`；`unknown` = 扫描工具不可用或引用关系无法解析，计入 plan"缺口与开放问题"，**不得静默省略或猜测填 low**；`high` 的 unit 必须在"执行顺序"中说明拆分或排序理由。**整体降级（AC3.4，v1.2 补）**：扫描因环境原因整体不可用（工具缺失/异常）→ 降级为现状行为（Units 表无影响面列），并在 plan.md 注明降级事实——**不得因影响面缺失阻断 Sprint Planning 起步**。
    - **声明验证命令（F2 规范来源）**：在 plan.md"验证命令"段声明基线/回归共用的命令原文；plan 未声明（含存量 intent）→ AskUserQuestion 向人类询问，裁决逐字进 `decisions.md` 后回填 plan.md。
    - **第 0 步·记录基线（F2）（U4：响应触点 12）**：**时序硬约束——先于任何本 intent 测试文件写入（含 dev 的失败测试）**。运行声明的验证命令 → 解析统计（`/^ok\b/` 计 pass、`/^FAIL\b/` 计 fail、尾行 `ALL <n>` 与 pass+fail 交叉核对；多套件逐套件解析后求和；交叉核对不一致或尾行缺失 = 解析失败 → `unavailable: true`、计数与 coverage 置 null、`suites` 保留原清单并告警，**不得虚构 0 fail**）→ 写 `state.testBaseline`（`command` 记实际执行原文，`suites` 记参与统计的套件清单）。基线不可得是否阻断后续流程归人类裁决（AskUserQuestion），编排者不得自行跳过或自行阻断。
 2. **TDD 锁**：dev 写失败测试并提交后，运行 `/aidlc:lock-tests` 置位（此后 guard-gates **deny** 锁定范围内测试文件的改动；契约有错走 `/aidlc:unlock-tests <理由>`）。锁定范围 = 失败测试提交涉及的测试文件路径，记入 `state.json.tddLockPaths`。
