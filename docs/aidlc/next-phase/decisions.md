@@ -165,3 +165,12 @@ GATE-APPROVED gate2 2026-10-15
 2. 编辑 scripts/tests/ac-coverage.test.mjs 两处（hook 确认解锁窗口内合规）：头注释 regression scenarios 1-17→1-18；场景 18 断言追加 `&& !r.reason.includes('AC1.1')`（证明表一收集未被误伤，防"表头后全部不收"退化）。
 3. 四套件复跑 28/23/15/50 = 116 全绿。
 4. 清除 override（重新上锁），随本记录提交。
+
+## 2026-10-15 Operations：SLA/阈值/发布窗口裁决
+
+人类裁决（AskUserQuestion 选项原文）：
+1. 部署窗口：**"立即发布 v1.2.0（推荐）"**——ops 完结后立即 bump 1.2.0（plugin.json + marketplace.json）并推送。
+2. 监控/告警阈值：**"CI 红 + hook 失效 = 立即（推荐）"**——CI 红（plugin-tests.yml）或用户报告 hook.run.failed/守卫失效 = 立即响应（当日修复或回滚）；其余 issue 进 backlog 周处理。
+3. retro.md 形式：**"我起草你确认（推荐）"**——编排者按本 intent 全程记录起草 retro.md，人类确认后落盘完结。
+
+裁决已落 ops-runbook.md（监控面/阈值表/发布流水线/回滚策略/事件响应/已知技术债）。
