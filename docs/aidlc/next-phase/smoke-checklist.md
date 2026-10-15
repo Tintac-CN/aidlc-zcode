@@ -89,3 +89,22 @@
 - T51：test-strategy.md 测试点 T51（AC1.4，E2E（需人工），P2）
 - 经本清单兑现的降级测试点：T01/T02/T04（route 提议 / 确认 / 拒绝 → T50 S2-S3）、T10-T15（基线记录 / 回归对比 / 存量豁免 → T50 S4、T51 S4）、T20/T23/T24（影响面列 / 分级 / 降级 → T50 S4）
 - 关联工件：plan.md U5、architecture.md 回归清单 17 场景（对应 ac-coverage 49/49，T50 的机械前提）
+
+---
+
+## 真实环境核验（2026-10-15，响应 Gate#2 人类裁决"2个任务都请在真实环境重新核验"）
+
+> 执行人：**人类参与**（真实 AskUserQuestion A1 表单作答 + T04 拒绝选择）+ 编排者驱动 1.1.0 真实 hook；scratch `$TMP/aidlc-smoke-real/{t50,t51}`。本节结果**补充并部分取代**上方机器模拟记录（M1/M6 的证据缺口由此闭合）。
+
+| 核验项 | 实际观察 | 结论 |
+|---|---|---|
+| M2 场景 18（解锁包） | 人类解锁（裁决原文见 decisions.md）→ ac-coverage 补第二张表 fixture → **50/50 全绿**（其余三套件 28/23/15 不变） | PASS |
+| T50-S2/S3 真实 A1 表单（T01/T02） | 真实 AskUserQuestion 呈现（识别意图 + 3 条拆分预览 + classic 提议 + 三选）；人类作答原文：**"进入生命周期（采纳 classic 提议）"** → decisions.md 逐字记录（A3 凭据）→ 骨架 state.json `route = "classic"`（node 实证）→ git 提交 | PASS |
+| T50-S4 真实执行 | 三工件 + plan.md（影响面列 low/med/low + 验证命令声明段）+ `PLAN-CONFIRMED 2026-10-15`（A3）→ 声明命令实跑 1/1 → testBaseline unavailable=false | PASS |
+| T50-S5 F4 实弹 | inception→gate1 转移 → **0 字节 plain allow** | PASS |
+| T50-S6 gate1 批准 | 表单真实呈现（三工件 + 覆盖结论 + 审批项）→ **人类未作答** → scratch 停在 gate1 pending 作为诚实证据；批准步骤仍属正式门审职责 | BLOCKED（人类未作答，如实记录） |
+| **T04 拒绝路径（M6）** | 脚本化表单（已披露）第二样本「颜色主题切换」+ express 提议 → 人类作答原文：**"不进流程直接答复（模拟拒绝）"** → 实测：`docs/aidlc/` 仅 config.json + csv-export（**零拒绝样本残留**）、需求获直接答复（主题 = 配置对象 + ANSI 转义 + --theme 默认值，无依赖库）——T04 三断言（不写入 route / 不进简化流程 / 零文件）真实兑现 | PASS |
+| T51 复验（S1/S2/S5） | 全新 legacy 构造件 + 1.1.0 hooks：无 `route=` 字样 / 无 Auto-route 行；自然语言 0 字节静默；preserveKeys deny 且 reason 含 unitStatus | PASS |
+| 四套件（场景 18 后） | ac-coverage **50/50** + guard-gates 28 + auto-route 23 + route-profile 15 全绿 | PASS |
+
+**本节结论：M1/M6 的人类环证据缺口已由真实交互闭合**——A1 表单真实作答、真实意图创建、真实拒绝路径零残留；T50-S6 的 gate1 批准步骤因 scratch 构造件性质留待正式门审（设计如此）。
