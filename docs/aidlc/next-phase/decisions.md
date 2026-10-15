@@ -150,3 +150,18 @@ R2 修订全部为非锁定文件的文档/留痕层改动，零代码改动。�
 verifier 新鲜上下文终检 R2 增量：**PASS-WITH-CONCERNS**——上轮 3 项 MAJOR 逐条独立核验真实消解（计数 116/50 全链零当前态残留；裁决补录节在案、悬空引用消除；M7 两项独立复现与落盘记录一致）；R2 两提交确为零代码改动、TDD 锁定文件未被触碰；四套件 116/116 + check-plugin.sh 由 verifier 独立复跑全绿。verifier 点名 2 处 R2 注记失准（architecture.md 回归清单第 18 项轮次标签 R2→R1、F4 规格条目交叉引用 MAJOR-2→MINOR），编排者已顺手修正（ae79a77，注释级、实质内容经 verifier 核验正确）。
 
 编排者再次以 AskUserQuestion 表单呈报审批（批准进门·全打包 / 批准进门·②延期 / 打回修订）及追认项①②③④⑤，**用户未作答**。批准须人类回执、编排者绝不代批——gate2 保持 pending（未批准），phase 保持 gate2。无待修订项；追认项②涉及 TDD 锁、无人类裁决不得解锁。待人类再次 /aidlc:gate 或直接作答审批表单。
+
+## 2026-10-15 Gate#2 批准（第三轮复审后）
+
+人类裁决（用户回复原文）：**"批准"**——对应审批表单推荐项「批准进门（全打包）」：gate2=approved、phase 进 operations；追认项①（SKILL §2 AC2.3 补句对 unavailable 场景的外推，OQ6 按补句形态生效）③（history 末两条时间戳乱序知悉）④（场景 18 fix-before-test 知悉）⑤（T50-S6 scratch gate1 批准步骤未作答知悉）随批准生效；追认项②批准解锁小修（ac-coverage.test.mjs 头注释 1-17→1-18 + 场景 18 断言加固 `&& !r.reason.includes('AC1.1')`），执行后复跑四套件并重新上锁。
+
+依据：reviews/gate2-ai-r2.md（0B/3M/8m，3 MAJOR 已 R2 消解）+ 第三轮 verifier 终检 PASS-WITH-CONCERNS（3 MAJOR 逐条独立核验消解、R2 零代码改动、四套件 116/116 + check-plugin.sh 独立复跑全绿、2 处注记失准已修 ae79a77）。
+
+GATE-APPROVED gate2 2026-10-15
+
+## 2026-10-15 追认项②执行记录（gate2 批准全打包）
+
+1. tddLockOverride = {by: "human", at: 2026-10-15T03:44:39Z, reason: "gate2 批准全打包：追认项②——ac-coverage.test.mjs 头注释 1-17→1-18 + 场景 18 断言加固（!r.reason.includes('AC1.1')，dev 建议）"}（tddLock 保持 true）。
+2. 编辑 scripts/tests/ac-coverage.test.mjs 两处（hook 确认解锁窗口内合规）：头注释 regression scenarios 1-17→1-18；场景 18 断言追加 `&& !r.reason.includes('AC1.1')`（证明表一收集未被误伤，防"表头后全部不收"退化）。
+3. 四套件复跑 28/23/15/50 = 116 全绿。
+4. 清除 override（重新上锁），随本记录提交。

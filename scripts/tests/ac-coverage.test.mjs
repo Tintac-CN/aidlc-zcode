@@ -3,7 +3,7 @@
 // Contract sources (in order):
 //   docs/aidlc/next-phase/units/u2.md
 //   docs/aidlc/next-phase/architecture.md "F4 机械校验规格"
-//     — validation pipeline steps 0-5, bypass paths a-d, regression scenarios 1-17
+//     — validation pipeline steps 0-5, bypass paths a-d, regression scenarios 1-18
 //   architecture.md 数据模型 / 决策 #11 — preserveKeys key-retention on overwrite
 // Fixture style mirrors guard-gates.test.mjs: a tmpdir intent (prd.md /
 // test-strategy.md / state.json at phase=inception) + child_process feeding
@@ -456,8 +456,8 @@ intent('s18', {
 });
 {
   const r = outcome(writeState('s18', newState()));
-  ok('场景18 第二张表: 首个非表行终止收集 → 第二张表（同列序恰含 AC1.2）不注入 T → 真实缺口照常 deny',
-    r.kind === 'deny' && r.reason.includes('AC1.2'), JSON.stringify(r));
+  ok('场景18 第二张表: 首个非表行终止收集 → 第二张表（同列序恰含 AC1.2）不注入 T → 真实缺口照常 deny（且 reason 不含 AC1.1——表一收集未被误伤）',
+    r.kind === 'deny' && r.reason.includes('AC1.2') && !r.reason.includes('AC1.1'), JSON.stringify(r));
 }
 
 /* ─── 规格补充 — 映射列按表头列名定位（非固定列序）；cell 内 \| 转义非列边界 ─── */

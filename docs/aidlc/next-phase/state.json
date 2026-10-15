@@ -1,8 +1,8 @@
 {
   "slug": "next-phase",
   "intent": "根据调研结果，开始推进插件到下一个阶段",
-  "phase": "gate2",
-  "gates": { "gate1": "approved", "gate2": "pending" },
+  "phase": "operations",
+  "gates": { "gate1": "approved", "gate2": "approved" },
   "tddLock": true,
   "tddLockPaths": ["scripts/tests/ac-coverage.test.mjs", "scripts/tests/route-profile.test.mjs"],
   "tddLockOverride": null,
@@ -18,7 +18,7 @@
     "coverage": null
   },
   "unitStatus": { "U1": "done", "U2": "done", "U3": "done", "U4": "done", "U5": "done", "U6": "done" },
-  "updatedAt": "2026-10-15T00:55:00Z",
+  "updatedAt": "2026-10-15T03:44:39Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
     { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
@@ -40,6 +40,9 @@
     { "at": "2026-10-15T01:00:00Z", "from": "gate2", "to": "construction", "why": "gate2 review (reviews/gate2-ai.md): 1 BLOCKER / 7 MAJOR / ~15 MINOR; verifier PASS-WITH-CONCERNS (5 units independently reproduced, zero unplanned files); user unanswered at approval form — conservative rejection per decisions.md 2026-10-15 Gate#2 section (text record, no receipt): gate2 stays pending (never approved); revision round R1 scope = B1 docs (U6, pm) + M2 table-boundary (dev) + M3/M4/M5 protocol text + M7 negative-path verification (inline) + M1/M6 human-loop bundled for next review" },
     { "at": "2026-10-15T01:15:00Z", "from": "construction", "to": "gate2", "why": "gate2 revision R1 complete: B1 AC5.1 docs landed (README + index.html reflect F1-F4, counts 115, stale points fixed — commit bdf32ec; U6 registered in plan.md, unitStatus U6=done); M2 extractT table-boundary fix with RED→GREEN evidence (b271d4d, fixture scenario pending unlock bundle); M3/M4 SKILL semantics + §0 deny list ⑧⑨; M5 T05 honest reclassification; M7 negative-path verification (T12 unavailable=true live demo, T24 degradation plan demo) recorded in session; M1/M6 human-loop items bundled for re-review form; four suites re-verified green post-revision" },
     { "at": "2026-10-15T00:46:34Z", "from": "tddLockOverride=null", "to": "tddLockOverride=human(2026-10-15)", "why": "human ruled '2个任务都请在真实环境重新核验' (decisions.md 2026-10-15 Gate#2 R1 裁决记录): unlock approved to add M2 regression scenario 18 (second-table no-injection regression lock) to ac-coverage.test.mjs; override window for the single fixture addition, re-lock after verification; real-environment re-verification of T50/T51 human-loop to follow in-session" },
-    { "at": "2026-10-15T00:55:00Z", "from": "tddLockOverride=human(2026-10-15)", "to": "tddLockOverride=null (re-locked); real-env verification complete", "why": "scenario 18 landed (ac-coverage 50/50, four suites green) and committed; real-environment human-loop verification executed in-session: real A1 form answered '进入生命周期（采纳 classic 提议）' → scratch intent csv-export created with route=classic, S4 artifacts + PLAN-CONFIRMED + baseline (1/1), S5 F4 transition plain allow (0 bytes); real T04 rejection '不进流程直接答复（模拟拒绝）' → zero files created, direct answer per protocol; T51 re-run S1/S2/S5 PASS (no route= echo, 0-byte silence, preserveKeys deny listing unitStatus); S6 gate1 approval form presented unanswered (scratch kept at gate1 pending as honest evidence); results recorded in smoke-checklist.md real-env section" }
+    { "at": "2026-10-15T00:55:00Z", "from": "tddLockOverride=human(2026-10-15)", "to": "tddLockOverride=null (re-locked); real-env verification complete", "why": "scenario 18 landed (ac-coverage 50/50, four suites green) and committed; real-environment human-loop verification executed in-session: real A1 form answered '进入生命周期（采纳 classic 提议）' → scratch intent csv-export created with route=classic, S4 artifacts + PLAN-CONFIRMED + baseline (1/1), S5 F4 transition plain allow (0 bytes); real T04 rejection '不进流程直接答复（模拟拒绝）' → zero files created, direct answer per protocol; T51 re-run S1/S2/S5 PASS (no route= echo, 0-byte silence, preserveKeys deny listing unitStatus); S6 gate1 approval form presented unanswered (scratch kept at gate1 pending as honest evidence); results recorded in smoke-checklist.md real-env section" },
+    { "at": "2026-10-15T03:44:39Z", "from": "gate2", "to": "operations", "why": "human approved at gate2 3rd review (user reply '批准', GATE-APPROVED gate2 2026-10-15 in decisions.md): R2 review 0B/3M-all-closed/8m + verifier R3 PASS-WITH-CONCERNS independently verified all closures (counts 116/50, ruling on record, M7 reproducible; zero code changes; 116/116 + check-plugin green); ratification bundle ①③④⑤ effective, ② unlock approved for execution (header comment 1-18 + scenario 18 assertion strengthening, re-lock after)" },
+    { "at": "2026-10-15T03:44:39Z", "from": "tddLockOverride=null", "to": "tddLockOverride=human(2026-10-15)", "why": "ratification item ② executed: unlock window opened for the two approved edits to scripts/tests/ac-coverage.test.mjs (header comment 1-17→1-18 + scenario 18 assertion strengthening per dev suggestion); human ruling '批准' verbatim in decisions.md 2026-10-15 Gate#2 批准节" },
+    { "at": "2026-10-15T03:44:39Z", "from": "tddLockOverride=human(2026-10-15)", "to": "tddLockOverride=null (re-locked)", "why": "ratification item ② complete: header comment 1-18 + scenario 18 assertion strengthened (!r.reason.includes('AC1.1')); four suites re-verified 28/23/15/50 = 116 green; override window closed, lock restored" }
   ]
 }
