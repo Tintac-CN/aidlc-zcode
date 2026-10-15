@@ -97,9 +97,9 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 
 <header><div class="wrap">
   <h1>AI 高速产出，<span class="grad">人类全程把关</span></h1>
-  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、十个角色子代理、工件链审计与机制化守卫。斜杠命令驱动；v1.1 起支持<b>自动路由</b>——开启后自然语言直接进流程，疑问处必经人工确认。</p>
+  <p class="tagline">把 AWS <b>AI-DLC</b>（AI-Driven Development Life Cycle）方法论以 <b>ZCode 原生插件</b>落地：三阶段双门控流水线、十个角色子代理、工件链审计与机制化守卫。斜杠命令驱动；v1.1 起支持<b>自动路由</b>——开启后自然语言直接进流程，疑问处必经人工确认；v1.2 起新增<b>规模分级路由</b>（express / classic 两档）与三道交付质量护栏：<b>测试基线</b>、<b>影响面分析</b>、<b>AC↔测试点覆盖校验</b>。</p>
   <div class="badges">
-    <span class="badge">版本 <b>v1.1.0</b></span><span class="badge">License <b>MIT</b></span>
+    <span class="badge">版本 <b>v1.2（unreleased）</b></span><span class="badge">License <b>MIT</b></span>
     <span class="badge">12 命令 · 10 角色 · 6 hooks（5 守卫 + 1 路由）</span><span class="badge">全生命周期实战验证</span>
   </div>
   <div class="cta">
@@ -147,8 +147,9 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
   <p class="sub">全部机制经过真实项目端到端验证（含配额熔断降级、并发写、对抗绕过等压力场景）。</p>
   <div class="grid">
     <div class="card"><h4><span class="ic">🎭</span>十个角色子代理</h4><p>六个生产角色（pm / architect / dev / qa / tea / verifier，约束前置）+ 四个<b>只读互审角色</b>（reviewer-pm / -architect / -qa / -dev，<b>无 Edit/Write 工具</b>——互审只读是机制保证，不靠提示词）。</p></div>
-    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个守卫 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改锁定测试会被拦；门控置 approved 必须有人类回执且<b>打回后旧回执作废</b>；审计文件禁 Edit（防篡改历史）；损坏 state.json 时 fail-closed；<code>.env</code>/密钥路径写入被拒。</p></div>
-    <div class="card"><h4><span class="ic">🧭</span>自动路由（v1.1 新增）</h4><p><code>/aidlc:on</code> 后自然语言直接进流程，不必敲命令——接入前先给「意图 + 拆分预览」让你确认，超范围输入三选，单元拆分开发前再确认一次；<b>门禁与守卫不受开关影响</b>（默认关，见 <a href="#faq">FAQ</a>）。</p></div>
+    <div class="card"><h4><span class="ic">🛡️</span>机制化守卫（非口头承诺）</h4><p>5 个守卫 hooks：未过门禁写实现计划会被 <b>deny</b>；TDD 锁下改锁定测试会被拦；门控置 approved 必须有人类回执且<b>打回后旧回执作废</b>；审计文件禁 Edit（防篡改历史）；损坏 state.json 时 fail-closed；<code>.env</code>/密钥路径写入被拒；<b>v1.2 新增</b>——进 Gate#1 时机械比对 AC↔测试点覆盖（<b>缺口/幻影编号 deny</b>），state.json 整体覆写丢失既有键（route / testBaseline / unitStatus / tddLock / tddLockPaths）<b>deny</b>。</p></div>
+    <div class="card"><h4><span class="ic">🧪</span>测试基线与影响面（v1.2 新增）</h4><p>Construction 第 0 步记录测试基线（总数/pass/fail 落 state.json），交付验证时<b>新失败才算回归</b>、存量失败不再误判，命令失败显式记「基线不可用」（unavailable），不虚构 0 fail；Sprint Planning 为每个 unit 扫描引用方，单元表新增<b>影响面列</b>（low / med / high / unknown），high 项在拆分确认时显式标出。</p></div>
+    <div class="card"><h4><span class="ic">🧭</span>自动路由与规模分级（v1.1 / v1.2）</h4><p><code>/aidlc:on</code> 后自然语言直接进流程，不必敲命令——接入前先给「意图 + 拆分预览」让你确认，超范围输入三选，单元拆分开发前再确认一次；v1.2 起接入时还会按规模提议 <b>express / classic 两档路线</b>（AI 提议 + 人一次确认，route 记入 state.json；缺失/非法按 classic 全量兜底，express 只裁文档与评审轮次、门控与守卫一项不裁）；<b>门禁与守卫不受开关影响</b>（默认关，见 <a href="#faq">FAQ</a>）。</p></div>
     <div class="card"><h4><span class="ic">📜</span>工件链审计</h4><p>PRD、架构、测试策略、计划、评审、决策、复盘全部落 <code>docs/aidlc/&lt;意图&gt;/</code>，一工件一提交；人类反馈<b>逐字</b>进 decisions.md。</p></div>
     <div class="card"><h4><span class="ic">🔁</span>断点续跑</h4><p><code>state.json</code> 记录阶段机与单元进度；中断后 <code>/aidlc:resume</code> 自动四方对账（state/磁盘/git/决策），按 unit 粒度恢复，不重跑已完成的。</p></div>
     <div class="card"><h4><span class="ic">🔍</span>新鲜上下文终检</h4><p>Gate#2 派独立 verifier：自己跑测试、双查计划外文件、抽查验收、核实前轮评审声称——实战中真的抓到过编排者的盲区。</p></div>
@@ -180,7 +181,7 @@ zcode plugins install aidlc@aidlc-zcode</code></pre>
 
   <h3>验证安装</h3>
   <pre><code>zcode plugins list | grep -A2 aidlc
-# 期望输出：skills: 2, commands: 10, hooks: 5
+# 期望输出：skills: 2, commands: 12, hooks: 6
 
 zcode commands list        # 应看到 12 个 /aidlc:* 命令
 zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
@@ -190,18 +191,18 @@ zcode skills list          # 应看到 aidlc 与 party-review</code></pre>
   <p>仓库更新后（比如 0.2.0 → 1.0.0），本地安装<b>不会自动跟随</b>，需要手动升级：</p>
   <pre><code># 1. 升级到 marketplace 里的最新版本
 zcode plugins update aidlc@aidlc-zcode
-# 成功输出形如：Updated plugin aidlc@aidlc-zcode from 1.0.0 to 1.1.0. Restart zcode to apply.
+# 成功输出形如：Updated plugin aidlc@aidlc-zcode from 1.1.0 to 1.2.0. Restart zcode to apply.
 
 # 2. 必须重启 ZCode——旧会话仍挂着上一版的 hooks
 # 3. 验证版本（看缓存路径里的版本号）
 zcode plugins list | grep "cache/aidlc-zcode"
-# 期望：cache/aidlc-zcode: ...\aidlc\1.1.0</code></pre>
+# 期望：cache/aidlc-zcode: ...\aidlc\1.2.0</code></pre>
   <div class="note warn"><b>⚠️ 升级后不重启 = 旧守卫还在岗</b>
-  <p>命令、agent、hooks 都在<b>会话启动时</b>注册。升级后不重启的 ZCode 里跑的还是旧版守卫（例如 1.0.0 新增的「审计文件禁 Edit」「打回后旧回执作废」不会生效，但界面上看起来一切正常）——这是最容易踩的坑。</p></div>
+  <p>命令、agent、hooks 都在<b>会话启动时</b>注册。升级后不重启的 ZCode 里跑的还是旧版守卫（例如 1.2.0 新增的「覆盖校验」「键保留校验」不会生效，但界面上看起来一切正常）——这是最容易踩的坑。</p></div>
   <p>两点说明：</p>
   <ul class="tick">
     <li><b>update 没反应？</b>update 以 marketplace 记录的版本号为准——源仓库没 bump 版本时 update 会提示已是最新。本插件发新版必定同步 bump <code>plugin.json</code> 与 <code>marketplace.json</code>，正常 <code>git pull</code> 仓库（或等待 GitHub 源同步）后再 update 即可。</li>
-    <li><b>正在跑的 intent 怎么办？</b>状态全在 <code>docs/aidlc/&lt;意图&gt;/</code> 与 git 提交里，升级不碰它们。重启后 <code>/aidlc:resume</code> 照常续跑（新版守卫识别旧 intent 的 state.json，兼容 0.x 版本创建的 intent）。</li>
+    <li><b>正在跑的 intent 怎么办？</b>状态全在 <code>docs/aidlc/&lt;意图&gt;/</code> 与 git 提交里，升级不碰它们。重启后 <code>/aidlc:resume</code> 照常续跑（新版守卫识别旧 intent 的 state.json，兼容 0.x 版本创建的 intent；v1.2 亦然——无 route 字段按 classic 走、无基线退化为现状）。</li>
   </ul>
 </div></section>
 
@@ -227,7 +228,7 @@ zcode plugins list | grep "cache/aidlc-zcode"
   <div class="step"><div class="n">✚</div><div class="body">
     <h4>可选：自动路由——连命令都懒得敲</h4>
 <pre><code>/aidlc:on</code></pre>
-    <p>之后直接说「给这个工具加一个导出CSV的功能」即可：先给你看意图识别和拆分预览，你确认后才进流程。开关存在项目里（<code>docs/aidlc/config.json</code>，默认关），<code>aidlc off</code> 随时关回。</p>
+    <p>之后直接说「给这个工具加一个导出CSV的功能」即可：先给你看意图识别和拆分预览，你确认后才进流程（v1.2 起确认时 AI 会一并提议 express / classic 路线档位）。开关存在项目里（<code>docs/aidlc/config.json</code>，默认关），<code>aidlc off</code> 随时关回。</p>
   </div></div>
 </div></section>
 
@@ -241,7 +242,7 @@ zcode plugins list | grep "cache/aidlc-zcode"
   <ul class="tick">
     <li>编排者先建目录与骨架（intent.md + state.json + decisions.md），再并行扇出三个角色</li>
     <li>意图有歧义会<b>先问你</b>（最多 3 个关键问题）——AI 不猜，你的裁决逐字留痕</li>
-    <li>三工件齐后跑「对齐拍」：交叉核对验收标准编号与语义对齐表，错位派回对应角色回填</li>
+    <li>三工件齐后跑「对齐拍」：交叉核对验收标准编号与语义对齐表，错位派回对应角色回填；<b>v1.2 起进 Gate#1 前 hook 还会机械校验</b>：prd 验收标准编号与 test-strategy「映射 AC」列双向比对，缺口/幻影编号直接拦截</li>
   </ul>
   <p>产出：<code>prd.md</code>（用户故事+可测验收标准）、<code>architecture.md</code>（架构+数据模型+决策理由）、<code>test-strategy.md</code>（P0/P1/P2 风险排序）。</p>
 
@@ -261,10 +262,10 @@ zcode plugins list | grep "cache/aidlc-zcode"
 # ……dev 实现至全绿……
 /aidlc:unlock-tests 契约字段写错了   # 仅当契约本身有错，经你批准解锁</code></pre>
   <ul class="tick">
-    <li>Sprint Planning：PRD 拆成 units（<code>plan.md</code> + <code>units/*.md</code>）</li>
+    <li>Sprint Planning：PRD 拆成 units（<code>plan.md</code> + <code>units/*.md</code>）；<b>v1.2 起</b>每个 unit 扫描引用方得「影响面」列（low / med / high / unknown），high 项拆分确认时显式标出；同时<b>第 0 步记录测试基线</b>（总数/pass/fail 落 state.json）</li>
     <li><b>TDD 铁律</b>：先写失败测试并提交 → <code>/aidlc:lock-tests</code> 上锁 → 此后改测试文件会被 hook <b>deny</b>；契约有错走 unlock（理由进 decisions.md）</li>
     <li>并行泳道：dev（TDD 实现）｜architect（基础设施）｜tea（E2E/性能，量化阈值）</li>
-    <li>每完成一个 unit 更新 <code>state.json</code> 的 unitStatus 并提交——中断后 resume 只续未完成的</li>
+    <li>每完成一个 unit 更新 <code>state.json</code> 的 unitStatus 并提交——中断后 resume 只续未完成的；交付验证时对照基线：<b>新失败 = 回归</b>，基线中已有的失败记为存量不误判</li>
   </ul>
 
   <h3>第 4 步 · Gate#2 交付门 —— 独立终检 + 你验收</h3>
@@ -294,17 +295,17 @@ zcode plugins list | grep "cache/aidlc-zcode"
   <h2><span class="num">06</span>命令参考</h2>
   <table>
     <tr><th>命令</th><th>作用</th><th>备注</th></tr>
-    <tr><td><code>/aidlc:inception &lt;意图&gt;</code></td><td>启动意图：建骨架 → 并行产出 PRD/架构/测试策略</td><td>歧义先问，最多 3 问</td></tr>
-    <tr><td><code>/aidlc:gate [gate1|gate2]</code></td><td>执行当前门：AI 互审 → 人类审批</td><td>推断真值表覆盖全部相位；打回自动回退</td></tr>
-    <tr><td><code>/aidlc:construct</code></td><td>拆 units、TDD 锁、并行实现</td><td>前置：gate1 approved（hook 强制）</td></tr>
-    <tr><td><code>/aidlc:ops</code></td><td>运维手册 + 参数收集 + 复盘完结</td><td>前置：gate2 approved</td></tr>
-    <tr><td><code>/aidlc:status</code></td><td>查阶段/门控/工件清单/下一步</td><td>含 git 提交状态对账</td></tr>
-    <tr><td><code>/aidlc:resume [slug]</code></td><td>断点续跑（四方对账 + unit 粒度恢复）</td><td>SessionStart 自动预热</td></tr>
+    <tr><td><code>/aidlc:inception &lt;意图&gt;</code></td><td>启动意图：建骨架 → 并行产出 PRD/架构/测试策略（express 路线裁剪为 PRD/测试策略两件）</td><td>歧义先问，最多 3 问；自动路由开启时接入确认含 express/classic 路线提议</td></tr>
+    <tr><td><code>/aidlc:gate [gate1|gate2]</code></td><td>执行当前门：AI 互审 → 人类审批</td><td>推断真值表覆盖全部相位；打回自动回退；进 gate1 时 hook 机械校验 AC↔测试点覆盖（缺口/幻影 deny）</td></tr>
+    <tr><td><code>/aidlc:construct</code></td><td>拆 units、记录测试基线与影响面、TDD 锁、并行实现</td><td>前置：gate1 approved（hook 强制）</td></tr>
+    <tr><td><code>/aidlc:ops</code></td><td>运维手册 + 参数收集 + 复盘完结</td><td>前置：gate2 approved（retro 在 express 路线下人类可选）</td></tr>
+    <tr><td><code>/aidlc:status</code></td><td>查阶段/门控/工件清单/下一步</td><td>含 git 提交状态对账；工件期望清单按 route 显示，无基线时显示「无基线」</td></tr>
+    <tr><td><code>/aidlc:resume [slug]</code></td><td>断点续跑（四方对账 + unit 粒度恢复）</td><td>SessionStart 自动预热；存量 intent 零强制补跑</td></tr>
     <tr><td><code>/aidlc:on</code> ｜ <code>/aidlc:off</code></td><td>自动路由开关（v1.1，默认关；开启后说 "aidlc on/off" 也行）</td><td>开关只控路由注入，守卫不受影响</td></tr>
     <tr><td><code>/aidlc:lock-tests</code></td><td>TDD 锁置位（校验测试已提交）</td><td>此后改测试被 deny</td></tr>
     <tr><td><code>/aidlc:unlock-tests &lt;理由&gt;</code></td><td>经人类批准解锁（理由逐字留痕）</td><td>修完契约重新上锁</td></tr>
     <tr><td><code>/aidlc:archive &lt;理由&gt;</code></td><td>终止 intent（archived，历史保留作审计）</td><td>打回 3 轮不收敛 / 需求取消时</td></tr>
-    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 守卫 28 场景 + 自动路由 23 场景）</td><td>改插件配置后必跑；CI 也会自动跑</td></tr>
+    <tr><td><code>/aidlc:eval</code></td><td>插件自检回归（hook 语法 + 四套件 115 检查：守卫 28 / 自动路由 23 / 分级 15 / 覆盖 49）</td><td>改插件配置后必跑；CI 也会自动跑</td></tr>
   </table>
 </div></section>
 
@@ -314,10 +315,10 @@ zcode plugins list | grep "cache/aidlc-zcode"
 
   <h3>状态机与工件</h3>
   <pre><code>docs/aidlc/&lt;slug&gt;/
-├── state.json          # 阶段机：phase / gates / tddLock / unitStatus / history（只追加）
+├── state.json          # 阶段机：phase / gates / route / testBaseline / tddLock / unitStatus / history（只追加）
 ├── intent.md           # 一句话意图（用户原话逐字保留）
-├── prd.md  architecture.md  test-strategy.md     # Inception 产出
-├── plan.md  units/     # Construction 计划
+├── prd.md  architecture.md  test-strategy.md     # Inception 产出（express 路线为 prd + test-strategy 两件）
+├── plan.md  units/     # Construction 计划（units 表含「影响面」列）
 ├── reviews/            # 各门 AI 互审与 verifier 报告
 ├── decisions.md        # 人类决策台账（只追加；门控回执在此校验）
 ├── audit.log           # Stop hook 逐轮审计
@@ -328,11 +329,11 @@ docs/aidlc/config.json  # 自动路由开关（v1.1，默认 off；不随 intent
   <h3>六个 hooks（五守卫 + 一路由，插件自带自动启用）</h3>
   <table>
     <tr><th>Hook</th><th>事件</th><th>强制内容</th></tr>
-    <tr><td><code>auto-route</code>（v1.1）</td><td>UserPromptSubmit</td><td>自动路由开启时注入路由契约（意图接入确认 / 超范围三选 / 拆分确认 / 门禁永不自动）；关闭时零注入。只注入上下文，从不写文件、不拦操作；开关短语由 hook 确定性识别、模型二次确认</td></tr>
-    <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改锁定测试（tddLockPaths 限定范围）；门控置 approved 须有人类回执（打回后旧回执作废）；state.json/decisions.md 禁 Edit、只追加、乐观锁；损坏 state.json fail-closed</td></tr>
+    <tr><td><code>auto-route</code>（v1.1）</td><td>UserPromptSubmit</td><td>自动路由开启时注入路由契约（意图接入确认 / 超范围三选 / 拆分确认 / 门禁永不自动）；关闭时零注入。只注入上下文，从不写文件、不拦操作；开关短语由 hook 确定性识别、模型二次确认。v1.2 起摘要行追加 <code>route=</code> 只读回显（非法值透传原值并标注 invalid→classic）</td></tr>
+    <tr><td><code>guard-gates</code></td><td>PreToolUse</td><td>未过 gate1 禁写 plan/units；TDD 锁禁改锁定测试（tddLockPaths 限定范围）；门控置 approved 须有人类回执（打回后旧回执作废）；state.json/decisions.md 禁 Edit、只追加、乐观锁；损坏 state.json fail-closed；<b>v1.2</b>：phase→gate1 转移时机械比对 prd 验收标准 ↔ test-strategy「映射 AC」列（缺口/幻影/工件缺失 deny，不可解析 allow+披露），整体覆写键保留校验（丢 route/testBaseline/unitStatus/tddLock/tddLockPaths 既有键 deny，值变更放行）</td></tr>
     <tr><td><code>guard-paths</code></td><td>PreToolUse</td><td><code>.env</code>/密钥/凭据文件写入 deny（<code>.env.example</code> 白名单）</td></tr>
     <tr><td><code>guard-tests</code></td><td>PostToolUse</td><td>TDD 锁期间测试文件被改 → 警告注入（提示走解锁流程）</td></tr>
-    <tr><td><code>session-context</code></td><td>SessionStart</td><td>新会话注入活跃 intent 状态 + decisions.md 最近 15 行</td></tr>
+    <tr><td><code>session-context</code></td><td>SessionStart</td><td>新会话注入活跃 intent 状态 + decisions.md 最近 15 行；v1.2 起 Gates 行追加 route 只读回显</td></tr>
     <tr><td><code>audit-log</code></td><td>Stop</td><td>逐轮摘要追加 audit.log</td></tr>
   </table>
 
@@ -340,7 +341,7 @@ docs/aidlc/config.json  # 自动路由开关（v1.1，默认 off；不随 intent
   <ul class="tick">
     <li>hooks 是<b>流程约束</b>（防手滑、强制仪式），<b>不是安全边界</b>——Bash 重定向等间接写可绕过；强边界请放 CI / 分支保护层</li>
     <li>角色「常驻约束」是提示词，长上下文/对抗输入下可能被稀释——<b>门控处的人类复核是唯一可信兜底</b></li>
-    <li>hook 脚本出错会 fail-open（静默失去保护）——改插件后务必跑 <code>/aidlc:eval</code></li>
+    <li>hook 脚本出错会 fail-open（静默失去保护）——改插件后务必跑 <code>/aidlc:eval</code>；F4 覆盖校验的「不可解析」分支是唯一披露式放行（allow 必带原因文本，交人类门复核），工件缺失与缺口/幻影一律 deny</li>
     <li>多 intent 并行会话不在当前版本支持范围（活跃 intent 按 updatedAt 判定）</li>
   </ul></div>
 </div></section>
@@ -348,6 +349,8 @@ docs/aidlc/config.json  # 自动路由开关（v1.1，默认 off；不随 intent
 <!-- ============ FAQ ============ -->
 <section id="faq"><div class="wrap">
   <h2><span class="num">08</span>FAQ</h2>
+  <h3>v1.2 加了什么？影响我现有的 intent 吗？</h3>
+  <p>四件事，全部向后兼容：<b>规模分级路由</b>——接入时 AI 提议 express（裁剪档）/ classic（全量档）两档，你一次确认后 route 记入 state.json；<b>测试基线</b>——Construction 第 0 步记录基线（总数/pass/fail），交付验证时新失败才算回归；<b>影响面分析</b>——拆单元时扫描每个涉及文件的引用方并分级（low/med/high/unknown）；<b>AC↔测试点覆盖校验</b>——进 Gate#1 时 hook 机械比对验收标准与测试点映射，缺口/幻影编号直接拦截。存量 intent 零行为变化：无 route 字段按 classic 全量续跑、无基线退化为现状、不强制补跑新校验。本次页面更新只改说明文字与示例，<b>不改变任何 hook / skill 运行时行为</b>。</p>
   <h3>自动路由是什么？为什么默认关？</h3>
   <p>默认你得敲 <code>/aidlc:inception</code> 等命令；<code>/aidlc:on</code> 之后直接用自然语言提需求即可——接入前会先给你看「识别的意图 + 粗粒度拆分预览」让你确认，流程中冒出超范围的新需求会三选（扩展当前 intent / 搁置 backlog / 越轨直改留痕），经此入口进入的 intent 在开发前还要你确认一次单元拆分。默认关是为了升级零行为变化：不想用自动路由的用户装完 v1.1 和 v1.0 手感完全一致。关闭（<code>/aidlc:off</code>）只是不再自动路由，<b>守卫与已存在的 intent 原样保留</b>。</p>
   <h3>装好了但看不到命令？/ 怎么升级版本？</h3>
@@ -378,7 +381,7 @@ docs/aidlc/config.json  # 自动路由开关（v1.1，默认 off；不随 intent
   <div>
     <b>许可</b><br>
     MIT License<br>
-    AIDLC-ZCode v1.1.0<br>
+    AIDLC-ZCode v1.2（unreleased）<br>
     本页由 GitHub Pages 提供
   </div>
 </div></div></footer>
