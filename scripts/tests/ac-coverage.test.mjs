@@ -439,6 +439,27 @@ intent('s17b', {
     r.kind === 'plain', JSON.stringify(r));
 }
 
+/* ─── 场景 18 — 第二张表不注入 T（gate2-R1/M2 表边界收口的回归锁；人类解锁 2026-10-15 补入）─── */
+intent('s18', {
+  'state.json': diskState('s18'),
+  'prd.md': prdOf('- **AC1.1**：标准一。\n- **AC1.2**：标准二。'),
+  'test-strategy.md': [
+    '# Test Strategy: fixture', '', '## 测试点清单', '',
+    '| # | 映射 AC | 场景 | 层级 | 优先级 |',
+    '|---|---|---|---|---|',
+    '| T01 | AC1.1 | 覆盖标准一 | 单元 | P0 |', '',
+    '上表为正式清单，下表为统计表（无映射语义）。', '',
+    '| 统计项 | 数值 | 备注 |',
+    '|---|---|---|',
+    '| 用例数 | AC1.2 | 含筛选场景 |'
+  ].join('\n')
+});
+{
+  const r = outcome(writeState('s18', newState()));
+  ok('场景18 第二张表: 首个非表行终止收集 → 第二张表（同列序恰含 AC1.2）不注入 T → 真实缺口照常 deny',
+    r.kind === 'deny' && r.reason.includes('AC1.2'), JSON.stringify(r));
+}
+
 /* ─── 规格补充 — 映射列按表头列名定位（非固定列序）；cell 内 \| 转义非列边界 ─── */
 intent('sxa', {
   'state.json': diskState('sxa'),
