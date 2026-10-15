@@ -97,3 +97,21 @@ GATE-APPROVED gate1 2026-10-15
 1. tddLockOverride = {by: "human", at: 2026-10-15, reason: "pk5 夹具编写笔误（盘上状态误展开 PKBASE）与已批准架构决策 #11 矛盾，字节级证据经编排者复核成立；批准解锁按方案 A 修复夹具"}（tddLock 保持 true）。
 2. 修复 scripts/tests/ac-coverage.test.mjs pk5 → 验证 ac-coverage 49/49 + 四套件全绿 + dogfood。
 3. 修复完成后清除 override（重新上锁），补提交，U2 = done。
+
+## 2026-10-15 Gate#2 互审呈报与保守打回（文字记录，无人类裁决）
+
+Gate#2 互审（reviews/gate2-ai.md）结论：**1 BLOCKER / 7 MAJOR / ~15 MINOR**；verifier 独立终检 **PASS-WITH-CONCERNS**（5 unit 逐条独立复现、零计划外文件、四套件独立复跑全绿、U3 字节级 v1.1 对比成立）。
+
+- **B1 [pm+qa]** AC5.1/U6 零交付：README.md 与 docs/index.html 未更新（套件计数停在 28+23 构成 AC5.1 明文禁止的"过时描述"），U6 从未进 plan.md，无延期裁决。
+- **M1 [三方]** T50/T51 执行主体偏离"人类执行"前提且无追认记录；**M2 [dev]** extractT 不按表边界收口（第二张表可注入假证据）；**M3 [pm]** AC3.4 整体降级落点缺失；**M4 [pm]** AC2.3 标注/告警/豁免留痕落点缺失；**M5 [qa]** T05 悬空未归类；**M6 [qa]** T04 拒绝路径兑现声明虚化；**M7 [qa]** T12/T24 等 P0 降级负路径零执行证据。
+
+编排者以 AskUserQuestion 呈报（打回修订 / 带病批准 / 定向裁决），**用户未作答**。批准须人类回执、编排者绝不代批——gate2 **未获批准**；按建议方向保守打回修订（文字记录留痕，不写回执行）。修订轮 R1（gate2）范围：
+1. **B1**：README.md 与 docs/index.html 补 AC5.1 内容（四能力 + 套件计数 28+23+15+49 + auto-route/hook 表同步）——pm 执行；plan.md 补登 U6。
+2. **M2**：guard-gates.mjs extractT 表边界收口（遇首个非表行停止收集）——dev 执行；回归场景补第二张表 fixture 需再次解锁，**并入下次人类裁决打包**（先落生产修复与人工验证）。
+3. **M3/M4**：SKILL.md 补 AC3.4 整体降级语义与 AC2.3 标注/告警/豁免留痕落点；顺带 SKILL §0 deny 清单补 F4/键保留两项（architect MINOR-1）——编排者内联（精确文本由评审给出）。
+4. **M5**：test-strategy T05 归类修正（结构性证据 + pk 组实跑，诚实降级表述）——编排者内联。
+5. **M7**：T12/T24 负路径机械补验（基线命令失败 → unavailable=true 实测；影响面扫描降级演示）——编排者 scratch 实测记录。
+6. **M1/M6**：人类环补验（真实会话 A1 表单作答/拒绝路径/T50-T51 复跑）——**待人类裁决**：真实会话补验或追认机器模拟结果；随 gate2 复审呈报打包。
+7. MINOR 顺带：plan.md 命令连接形态注记；其余（route 回显消毒、P 侧左边界、routeEcho 抽取、.zcode gitignore 等）登记为技术债随 gate2 复审追认。
+
+保守路径影响：gate2 保持 pending（未批准），phase=construction 修订；复审（party-review + verifier）在修订完成后由人类触发 /aidlc:gate。
