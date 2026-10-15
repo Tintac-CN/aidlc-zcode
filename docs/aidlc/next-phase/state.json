@@ -1,7 +1,7 @@
 {
   "slug": "next-phase",
   "intent": "根据调研结果，开始推进插件到下一个阶段",
-  "phase": "gate2",
+  "phase": "construction",
   "gates": { "gate1": "approved", "gate2": "pending" },
   "tddLock": true,
   "tddLockPaths": ["scripts/tests/ac-coverage.test.mjs", "scripts/tests/route-profile.test.mjs"],
@@ -17,8 +17,8 @@
     "unavailable": false,
     "coverage": null
   },
-  "unitStatus": { "U1": "done", "U2": "done", "U3": "done", "U4": "done", "U5": "done" },
-  "updatedAt": "2026-10-15T00:30:00Z",
+  "unitStatus": { "U1": "done", "U2": "done", "U3": "done", "U4": "done", "U5": "done", "U6": "pending(gate2-R1)" },
+  "updatedAt": "2026-10-15T01:00:00Z",
   "history": [
     { "at": "2026-10-14T12:57:13Z", "from": "none", "to": "inception", "why": "created via /aidlc:inception" },
     { "at": "2026-10-14T14:00:37Z", "from": "inception", "to": "gate1", "why": "three artifacts complete, alignment pass done (AC coverage check: no gaps, no phantoms)" },
@@ -36,6 +36,7 @@
     { "at": "2026-10-14T18:10:00Z", "from": "U5", "to": "U5=done", "why": "tea landed integration wiring (check-plugin.sh §2 four suites, CI sync, commit 4c66e87) and smoke-checklist.md (T50/T51 executable steps; T50 flagged as requiring pk5 resolution first). Construction now complete except U2 final acceptance — blocked solely on human unlock ruling (decisions.md 2026-10-14 Construction section); gate2 entry deferred until resolved per protocol (all units done + verification green required)" },
     { "at": "2026-10-14T22:47:02Z", "from": "tddLockOverride=null", "to": "tddLockOverride=human(2026-10-15)", "why": "human ruled '选择A方案' (decisions.md 2026-10-15 TDD 解锁裁决): unlock approved per /aidlc:unlock-tests semantics for pk5 fixture repair (方案 A — new content carries five preserved keys, drops only tddLockOverride); override window open for the single fixture edit, re-lock after verification" },
     { "at": "2026-10-14T22:48:30Z", "from": "U2=blocked(pk5-unlock)", "to": "U2=done; tddLockOverride cleared (re-locked)", "why": "pk5 fixture repaired per 方案 A (new content carries route/testBaseline/unitStatus/tddLockPaths, drops only tddLockOverride); verified: ac-coverage 49/49, route-profile 15/15, guard-gates 28/28, auto-route 23/23 — all four suites green with zero implementation changes (confirming implementation was decision-#11-correct all along); override window closed, lock restored" },
-    { "at": "2026-10-15T00:30:00Z", "from": "construction", "to": "gate2", "why": "Construction complete: 5/5 units done; F2 pre-gate2 regression comparison vs testBaseline — baseline suites 28/28 + 23/23, zero regressions (new suites route-profile 15 + ac-coverage 49 green, outside baseline scope per decision #6, recorded); T50/T51 smoke executed (T51 6/6 PASS, T50 5 PASS + 1 N-A, results in smoke-checklist.md commit 02adaee); all artifacts committed, working tree clean" }
+    { "at": "2026-10-15T00:30:00Z", "from": "construction", "to": "gate2", "why": "Construction complete: 5/5 units done; F2 pre-gate2 regression comparison vs testBaseline — baseline suites 28/28 + 23/23, zero regressions (new suites route-profile 15 + ac-coverage 49 green, outside baseline scope per decision #6, recorded); T50/T51 smoke executed (T51 6/6 PASS, T50 5 PASS + 1 N-A, results in smoke-checklist.md commit 02adaee); all artifacts committed, working tree clean" },
+    { "at": "2026-10-15T01:00:00Z", "from": "gate2", "to": "construction", "why": "gate2 review (reviews/gate2-ai.md): 1 BLOCKER / 7 MAJOR / ~15 MINOR; verifier PASS-WITH-CONCERNS (5 units independently reproduced, zero unplanned files); user unanswered at approval form — conservative rejection per decisions.md 2026-10-15 Gate#2 section (text record, no receipt): gate2 stays pending (never approved); revision round R1 scope = B1 docs (U6, pm) + M2 table-boundary (dev) + M3/M4/M5 protocol text + M7 negative-path verification (inline) + M1/M6 human-loop bundled for next review" }
   ]
 }
