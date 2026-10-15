@@ -157,6 +157,9 @@ const isSeparatorRow = cells =>
 // `## 测试点清单` table — the column is located by its HEADER NAME, not by
 // position; the header row and the |---| separator row are skipped; everything
 // outside the column (scene prose, examples like 例如 AC99) yields no evidence.
+// The collection block is bounded: it spans only the CONSECUTIVE table-row run
+// that follows the located header — the FIRST non-table row ends it, and rows
+// of any later table in the same section never yield evidence (gate2-R1/M2).
 // Cells are culled whole on range notation; surviving cells are split on
 // `[，,、/\s]+` and a token enters T iff it FULLY matches the AC regex and
 // carries P's granularity. Missing table/header → unparseable (allow+disclose).
@@ -173,7 +176,15 @@ function extractT(raw, mode) {
     const ln = lines[i];
     if (/^##(?!#)/.test(ln)) break;
     const row = ln.trim();
-    if (!row.startsWith('|')) continue;
+    if (!row.startsWith('|')) {
+      // Table-boundary rule (gate2-R1/M2): once the 映射 AC header is located,
+      // the FIRST non-table row ends this table's collection block. A later
+      // table in the same section has no located header of its own — rows that
+      // happen to carry AC numbers at the same column index must not silently
+      // patch a real coverage gap (宁可少算交人工，不可多算成假覆盖).
+      if (col !== -1) break;
+      continue; // header not yet found — prose before the table is expected
+    }
     const cells = splitTableRow(row);
     if (isSeparatorRow(cells)) continue;
     if (col === -1) {
