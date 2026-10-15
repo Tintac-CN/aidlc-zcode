@@ -5,7 +5,7 @@ skills: aidlc
 
 执行 **aidlc 插件自检与回归**（本命令用于插件源码仓库 `aidlc-zcode`，在其他项目里运行时提示先切到源码仓库）：
 
-1. 运行 `bash scripts/check-plugin.sh`（hook 脚本语法 node --check + manifest validate + 三列表发现；步骤 2 内含两套回归）。
+1. 运行 `bash scripts/check-plugin.sh`（hook 脚本语法 node --check + manifest validate + 三列表发现；步骤 2 内含四套回归：守卫 28 / 自动路由 23 / route 分级 15 / 覆盖校验 50）。
 2. 运行 `node scripts/tests/guard-gates.test.mjs`（守卫规则回归：门控顺序/TDD 锁/回执严格格式/乐观锁/只追加）与 `node scripts/tests/auto-route.test.mjs`（auto-route 回归：OFF 默认静默/开关短语识别/路由契约注入/输出 schema 严格性）。
 3. 汇总输出：通过/失败计数；任何 FAIL 都要给出失败场景与怀疑原因。
 4. 提醒：hook 脚本出错会 **fail-open（静默失去保护）**，任何语法或行为回归都按 P0 处理。

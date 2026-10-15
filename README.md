@@ -56,7 +56,7 @@ zcode plugins install aidlc@aidlc-zcode
 ## 开发
 
 - 插件源码：[plugins/aidlc/](plugins/aidlc/)
-- 发布自检一键脚本（node 探测 + hook 语法 + 回归四套件 115 检查（守卫 28 / 自动路由 23 / route 分级 15 / 覆盖校验 49）+ validate + 三列表；**hook 脚本语法错误 = fail-open 静默失去保护**，必须检查）：
+- 发布自检一键脚本（node 探测 + hook 语法 + 回归四套件 116 检查（守卫 28 / 自动路由 23 / route 分级 15 / 覆盖校验 50）+ validate + 三列表；**hook 脚本语法错误 = fail-open 静默失去保护**，必须检查）：
   ```
   bash scripts/check-plugin.sh
   ```
@@ -66,7 +66,7 @@ zcode plugins install aidlc@aidlc-zcode
 
 ## 状态
 
-v1.2（unreleased，未发布）—— **规模分级路由 + 交付质量三件套**。① 规模分级路由：接入确认时 AI 提议 `express` / `classic` 两档、一次确认后 `route` 字段记入 `state.json`（缺失/非法按 classic 全量兜底；express 只裁文档与评审轮次，机制强制项零裁剪）；② 测试基线：Construction 第 0 步记录（总数/pass/fail + 命令），新失败 = 回归、存量失败不误判，命令失败显式记 `unavailable` 不虚构 0 fail；③ 影响面分析：plan.md 单元表「影响面」列（low/med/high/unknown）；④ AC↔测试点覆盖校验：phase→gate1 转移时 guard-gates 机械比对（缺口/幻影 deny），另加 state.json 覆写键保留校验（五保留键）。存量 intent（v1.0/v1.1）零行为变化：无 route 字段按 classic 走、无基线退化为现状、不强制补跑新校验。回归扩为四套件 **28+23+15+49 = 115 检查**（`scripts/tests/` 下 guard-gates / auto-route / route-profile / ac-coverage），另附 T50/T51 真实会话 smoke。本条目为文档同步（Gate#2 打回修订 R1 的 B1 项）：**本次 README 与 docs/index.html 的改动只更新说明文字，不改变任何 hook/skill 运行时行为**；版本号 bump 由发布流程负责。
+v1.2（unreleased，未发布）—— **规模分级路由 + 交付质量三件套**。① 规模分级路由：接入确认时 AI 提议 `express` / `classic` 两档、一次确认后 `route` 字段记入 `state.json`（缺失/非法按 classic 全量兜底；express 只裁文档与评审轮次，机制强制项零裁剪）；② 测试基线：Construction 第 0 步记录（总数/pass/fail + 命令），新失败 = 回归、存量失败不误判，命令失败显式记 `unavailable` 不虚构 0 fail；③ 影响面分析：plan.md 单元表「影响面」列（low/med/high/unknown）；④ AC↔测试点覆盖校验：phase→gate1 转移时 guard-gates 机械比对（缺口/幻影 deny），另加 state.json 覆写键保留校验（五保留键）。存量 intent（v1.0/v1.1）零行为变化：无 route 字段按 classic 走、无基线退化为现状、不强制补跑新校验。回归扩为四套件 **28+23+15+50 = 116 检查**（`scripts/tests/` 下 guard-gates / auto-route / route-profile / ac-coverage），另附 T50/T51 真实会话 smoke。本条目为文档同步（Gate#2 打回修订 R1 的 B1 项）：**本次 README 与 docs/index.html 的改动只更新说明文字，不改变任何 hook/skill 运行时行为**；版本号 bump 由发布流程负责。
 
 v1.1.0 —— **自动路由模式**。`/aidlc:on|off` 或自然语言 "aidlc on/off" 切换（默认关，升级零行为变化）；开启后自然语言直接进流程，附三重人工确认：意图接入确认、超范围输入三选、单元拆分确认（仅自动路由入口）；门禁与全部守卫不受开关影响。新增 UserPromptSubmit hook（`auto-route.mjs`），回归 23 场景（`scripts/tests/auto-route.test.mjs`）。
 

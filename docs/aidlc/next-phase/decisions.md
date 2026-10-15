@@ -115,3 +115,28 @@ Gate#2 互审（reviews/gate2-ai.md）结论：**1 BLOCKER / 7 MAJOR / ~15 MINOR
 7. MINOR 顺带：plan.md 命令连接形态注记；其余（route 回显消毒、P 侧左边界、routeEcho 抽取、.zcode gitignore 等）登记为技术债随 gate2 复审追认。
 
 保守路径影响：gate2 保持 pending（未批准），phase=construction 修订；复审（party-review + verifier）在修订完成后由人类触发 /aidlc:gate。
+
+## 2026-10-15 TDD 解锁裁决（gate2 R1 场景 18 回归锁 + 真实环境核验打包）
+
+人类裁决（用户回复原文）：**"2个任务都请在真实环境重新核验"**——对 R1 计划第 2 条（M2 回归场景 fixture，待解锁打包）与第 6 条（M1/M6 人类环，待裁决形态）一并裁定为：批准解锁补入场景 18（第二张表不注入 T 的回归锁），且真实环境补验（非追认机器模拟结果）。
+
+执行记录：
+1. tddLockOverride = {by: "human", at: 2026-10-15, reason: "gate2 R1 M2 回归锁：guard-gates.mjs extractT 表边界收口（commit b271d4d 先落生产修复）需补第二张表 fixture（场景 18）锁定'无映射表头的第二张表不注入 T'；批准解锁按 R1 计划第 2 条执行"}（tddLock 保持 true）。
+2. 场景 18 补入 scripts/tests/ac-coverage.test.mjs（fixture：映射表 → 正文段 → 无映射表头的第二张统计表、同列序恰含 AC1.2；断言 deny 点名 AC1.2）→ 验证 ac-coverage 50/50 + 四套件全绿（28/23/15/50）。
+3. 真实环境人类环补验（M1/M6 闭环）：真实 A1 表单人类作答原文"进入生命周期（采纳 classic 提议）"→ scratch intent csv-export 创建（route=classic，位于 scratch `$TMP/aidlc-smoke-real/` 下、不污染本仓库）→ 工件+PLAN-CONFIRMED+基线（1/1）→ F4 转移 plain allow（0 字节）；真实 T04 拒绝路径人类作答原文"不进流程直接答复（模拟拒绝）"→ 拒绝路径零残留、需求获直接答复（核验在 scratch 工作区执行，本仓库 docs/aidlc/ 全程仅含 next-phase intent 与 config.json 布局不变）；T51 复验 S1/S2/S5 PASS（无 route= 字样、0 字节静默、preserveKeys deny 列丢失键）；T50-S6 gate1 批准表单已真实呈现但人类未作答——scratch 保留 gate1 pending 作为诚实证据（批准属正式门审职责，设计如此）。
+4. 修复完成后清除 override（重新上锁），结果写回 smoke-checklist.md 真实环境核验节，补提交（f218b58）。
+
+## 2026-10-15 Gate#2 复审（R2）互审呈报与修订记录（文字记录，无人类裁决）
+
+复审互审（reviews/gate2-ai-r2.md）结论：**0 BLOCKER / 3 MAJOR / 8 MINOR**——四方 reviewer（pm 首轮派发失败、重派成功）+ verifier（PASS-WITH-CONCERNS）并行；R1 点名项（M2 表边界、M3/M4/§0⑧⑨、M5、B1 主体、M1/M6 真实环境核验）经独立复核全部消解，四套件 116 全绿（qa/verifier 独立复跑）+ check-plugin.sh ALL PASSED + T03 字节级 v1.1 对比复现。
+
+3 项 MAJOR（均三方以上独立同指）与 R2 修订：
+1. **MAJOR-1 [四方同指] 文档套件计数 115/49 与实现 116/50 矛盾（AC5.1 判据字面再违例）**：B1 修复 bdf32ec 落在场景 18 提交 2039ac0 之前，R1 自己的 M2 fixture 提交使 B1 修复失效。R2 修订：README.md L59/L69、docs/index.html L308、test-strategy T40、architecture.md 头部注记/回归要求、smoke-checklist 溯源、plan.md U6 验收格全部同步为 116/50；顺带 eval.md L8"两套回归"→"四套回归"（v1.1.0 遗留过时，verifier 点名，计划外一行修）。
+2. **MAJOR-2 [四方同指] 场景 18 解锁裁决未逐字入 decisions.md（审计断链）**：state.json history 与 smoke-checklist L101 引用悬空。R2 修订：即本节上方「2026-10-15 TDD 解锁裁决（gate2 R1 场景 18 回归锁 + 真实环境核验打包）」节（含 T04 表述与事实对齐：真实核验在 scratch 工作区执行，本仓库 docs/aidlc/ 布局不变）。
+3. **MAJOR-3 [pm+qa] M7 负路径补验无持久化证据**：R1 计划第 5 条仅"recorded in session"。R2 修订：smoke-checklist.md 新增「M7 负路径补验」节——T12 实跑 `node scripts/tests/declared-but-nonexistent.mjs`（真实 MODULE_NOT_FOUND / exit 1）→ unavailable=true schema 落账形态；T24 实跑 `grep -rn 'nonexistent-module' scripts/ plugins/`（0 命中）→ 影响面 unknown + 缺口节登记形态。
+
+MINOR 处置：architecture F4 规格补表边界收口条目 + 回归清单第 18 项（已修）；state.json updatedAt 回退随 gate2 批准 state 写修复、history 末两条乱序追加式不可回改呈报知悉；SKILL §2 AC2.3 对 unavailable 场景的外推列追认项；ac-coverage.test.mjs（TDD 锁定）头注释 1-18 与场景 18 断言加固（`!r.reason.includes('AC1.1')`）打包待人类解锁裁决；场景 18 fix-before-test 无独立 RED 记录知悉（fail-closed 方向 qa/dev 双评审独立验证）。
+
+**追认项打包**（呈 gate2 审批表单一并裁决）：① SKILL §2 AC2.3 补句对 unavailable 场景的外推（OQ6 预设形态）；② TDD 锁内小修打包（头注释 1-18 + 断言加固）——批准解锁或裁决延期；③ history 末两条时间戳乱序知悉；④ fix-before-test 知悉；⑤ T50-S6 scratch gate1 批准步骤人类未作答知悉（正式门审职责，设计如此）。
+
+R2 修订全部为非锁定文件的文档/留痕层改动，零代码改动。四套件 + check-plugin.sh 复跑全绿后随本记录提交。

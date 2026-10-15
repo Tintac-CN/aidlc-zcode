@@ -88,7 +88,7 @@
 - T50：test-strategy.md 测试点 T50（AC1.1–AC4.4，E2E（需人工），P0）
 - T51：test-strategy.md 测试点 T51（AC1.4，E2E（需人工），P2）
 - 经本清单兑现的降级测试点：T01/T02/T04（route 提议 / 确认 / 拒绝 → T50 S2-S3）、T10-T15（基线记录 / 回归对比 / 存量豁免 → T50 S4、T51 S4）、T20/T23/T24（影响面列 / 分级 / 降级 → T50 S4）
-- 关联工件：plan.md U5、architecture.md 回归清单 17 场景（对应 ac-coverage 49/49，T50 的机械前提）
+- 关联工件：plan.md U5、architecture.md 回归清单 18 场景（对应 ac-coverage 50/50，T50 的机械前提）
 
 ---
 
@@ -108,3 +108,17 @@
 | 四套件（场景 18 后） | ac-coverage **50/50** + guard-gates 28 + auto-route 23 + route-profile 15 全绿 | PASS |
 
 **本节结论：M1/M6 的人类环证据缺口已由真实交互闭合**——A1 表单真实作答、真实意图创建、真实拒绝路径零残留；T50-S6 的 gate1 批准步骤因 scratch 构造件性质留待正式门审（设计如此）。
+
+---
+
+## M7 负路径补验（2026-10-15，gate2 R2 执行——响应 reviews/gate2-ai.md M7 / R1 计划第 5 条）
+
+> R1 计划第 5 条要求"编排者 scratch 实测记录"，此前仅"recorded in session"未落盘；本节为持久化补验。两项均为协议层（prompt 层）行为演示，无被测代码改动。
+
+| 补验项 | 实测命令与真实输出 | 协议要求 | 结论 |
+|---|---|---|---|
+| T12：基线命令失败 → unavailable=true | `node scripts/tests/declared-but-nonexistent.mjs` → `Error: Cannot find module … code: 'MODULE_NOT_FOUND'`、**exit code 1**（实跑于本仓库，2026-10-15） | SKILL §2：验证命令执行失败 → `unavailable: true`，计数键与 coverage 置 null、`failingTests` 省略、`suites` 保留原清单，**不得虚构 0 fail** | PASS——按 schema 落账应为：`{"recordedAt":"<ISO>","command":"node scripts/tests/declared-but-nonexistent.mjs","suites":["scripts/tests/declared-but-nonexistent.mjs"],"total":null,"pass":null,"fail":null,"unavailable":true,"coverage":null}`（failingTests 键省略） |
+| T24：影响面扫描降级 → unknown | `grep -rn 'nonexistent-module' scripts/ plugins/` → **0 命中**（引用关系无法解析的真实形态，实跑于本仓库，2026-10-15） | plan.md/architecture F3：扫描无结果或引用不可解析 → 影响面列填 `unknown` 并计入"缺口与开放问题"，**不得静默省略或猜测填 low** | PASS——plan.md 影响面格落账形态：`unknown`，且"缺口与开放问题"节须增一行说明（本 intent 的 U5 实测中扫描工具可用、未触发该形态，故以实跑 grep 演示判定链） |
+
+**本节结论：M7（T12/T24 P0 负路径）的"已验证"声明现已可复现**——两处判定链均有真实命令输出为证，与 SKILL §2 / plan.md F3 规格逐字对齐。
+
